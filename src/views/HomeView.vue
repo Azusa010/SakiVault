@@ -1,7 +1,7 @@
 <template>
   <div class="home-view">
     <!-- Hero轮播图 -->
-    <HeroCarousel :items="currentSeasonAnime.slice(0,5)" />
+    <HeroCarousel :items="currentSeasonAnime.slice(0, 5)" />
     <!-- Hero区域 -->
     <section class="hero">
       <div class="hero-content">
@@ -28,11 +28,7 @@
         <SkeletonCard v-for="n in 10" :key="n" />
       </div>
       <div v-else class="grid">
-        <AnimeCard
-          v-for="anime in currentSeasonAnime"
-          :key="anime.id"
-          :anime="anime"
-        />
+        <AnimeCard v-for="anime in currentSeasonAnime" :key="anime.id" :anime="anime" />
       </div>
     </section>
 
@@ -43,11 +39,7 @@
         <SkeletonCard v-for="n in 10" :key="n" />
       </div>
       <div v-else class="grid">
-        <AnimeCard
-          v-for="anime in popularAnime"
-          :key="anime.id"
-          :anime="anime"
-        />
+        <AnimeCard v-for="anime in popularAnime" :key="anime.id" :anime="anime" />
       </div>
     </section>
   </div>
@@ -71,7 +63,7 @@ function handleSearch() {
   if (query !== '') {
     router.push({
       path: '/search',
-      query: { q: query }
+      query: { q: query },
     })
   }
 }
@@ -98,8 +90,6 @@ onMounted(async () => {
     popularLoading.value = false
   }
 })
-
-
 </script>
 
 <style scoped>

@@ -2,7 +2,7 @@ import './assets/styles/global.css'
 
 import { createApp } from 'vue'
 import { createPinia } from 'pinia'
-
+import '@/assets/font_ftpgxlinezk/iconfont.js'
 import App from './App.vue'
 import index from './router/index'
 
