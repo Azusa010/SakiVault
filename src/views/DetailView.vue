@@ -18,13 +18,29 @@
               <span v-if="count">{{ count }} 人评分:</span>
               <StarRating v-if="anime.averageScore" :score="anime.averageScore" />
             </div>
-            <div class="dateBox" style="display: flex; flex-direction: column; gap: 0px;">
+            <div class="dateBox" style="display: flex; flex-direction: column; gap: 0px">
               <p>{{ (anime.infobox as Array<{ key: string }>)[3]?.key }}:</p>
-              <span v-if="anime.date" style="color: white; font-size: 20px;" >{{ anime.date }}</span>
+              <span v-if="anime.date" style="color: white; font-size: 20px">{{ anime.date }}</span>
             </div>
-            <span v-if="anime.episodes" style="color:white; font-size: 20px;" >{{ anime.episodes }} 集</span>
+            <div class="episodesBox">
+              <span v-if="anime.current_episodes === anime.episodes"
+                >已完结 {{ anime.current_episodes }} 集</span
+              >
+              <span v-if="anime.current_episodes === 0">未上映</span>
+            </div>
           </div>
-          <button class="fav-btn">收藏</button>
+        </div>
+      </div>
+      <div class="follor-wrapper" ref="folloWrapperRef">
+        <button class="fav-btn" @click="() => (isDropdownOpen = !isDropdownOpen)">
+          <span :class="`iconfont ${currentIcon}`"></span>
+          {{ followStatus }}
+        </button>
+        <div class="dropdown-menu" v-if="isDropdownOpen">
+          <div class="dropdown-item" v-for="v in statusList" :key="v.label" @click="selectSatus(v)">
+            <span :class="`iconfont ${v.icon}`"></span>
+            {{ v.label }}
+          </div>
         </div>
       </div>
     </div>
@@ -39,7 +55,8 @@
 <script setup lang="ts" name="">
 import { useRoute } from 'vue-router'
 import { getAnimeById } from '@/api/bangumi'
-import { onMounted, ref } from 'vue'
+import { onMounted, ref ,computed } from 'vue'
+import { onClickOutside } from '@vueuse/core'
 import '@/assets/font_ftpgxlinezk/iconfont.css'
 import StarRating from '@/components/StarRating.vue'
 
@@ -57,6 +74,14 @@ interface Anime {
   infobox: Array<{ key: string } | null | undefined>
   rating: { count: Record<string, number> }
   meta_tags: string[]
+  current_episodes: number
+  collection: {
+    on_hold: number
+    dropped: number
+    wish: number
+    collect: number
+    doing: number
+  }
 }
 const anime = ref<Anime | null>(null)
 const count = ref(0)
@@ -67,8 +92,36 @@ onMounted(async () => {
   for (const key in ratingCount) {
     count.value += ratingCount[key] ?? 0
   }
-  console.log(anime.value);
+  console.log(anime.value)
+})
 
+// 追番按钮
+const isDropdownOpen = ref(false)
+const followStatus = ref('未追')
+
+const statusList = [
+  { label: '未追', icon: 'icon-a-shoucang_quxiaoshoucang' },
+  { label: '在看', icon: 'icon-bofang' },
+  { label: '想看', icon: 'icon-shoucang' },
+  { label: '搁置', icon: 'icon-gezhi' },
+  { label: '看过', icon: 'icon-wancheng' },
+  { label: '抛弃', icon: 'icon-paoqi' },
+]
+
+function selectSatus(params: { label: string }) {
+  followStatus.value = params.label
+  isDropdownOpen.value = false
+}
+
+const currentIcon = computed(()=>{
+  const currentStatus = statusList.find((v) => v.label === followStatus.value)
+  return currentStatus ? currentStatus.icon : ''
+})
+
+const folloWrapperRef = ref<HTMLElement|null>(null)
+
+onClickOutside(folloWrapperRef,()=>{
+  isDropdownOpen.value = false
 })
 </script>
 
@@ -108,6 +161,7 @@ onMounted(async () => {
   position: relative;
   display: flex;
   align-items: flex-start;
+  flex-direction: column;
   padding: 20px;
   margin-top: 150px;
 }
@@ -152,16 +206,6 @@ onMounted(async () => {
   color: var(--color-primary);
 }
 
-.fav-btn {
-  padding: var(--space-sm) var(--space-xl);
-  border: none;
-  border-radius: var(--radius-md);
-  background-color: var(--color-primary);
-  color: white;
-  font-weight: 600;
-  cursor: pointer;
-}
-
 .summary-section {
   margin-top: var(--space-xl);
   max-width: 800px;
@@ -191,5 +235,69 @@ onMounted(async () => {
   color: var(--color-primary);
   cursor: pointer;
   font-weight: 600;
+}
+
+.episodesBox span {
+  color: white;
+  font-size: 20px;
+}
+
+.fav-btn {
+  width: 110px;
+  height: 45px;
+  border: 2px solid var(--color-primary);
+  border-radius: var(--radius-md);
+  background-color: transparent;
+  text-align: center;
+  color: white;
+  font-size: 18px;
+  cursor: pointer;
+  text-wrap: nowrap;
+}
+
+.fav-btn:hover {
+  background-color: rgba(0, 255, 204, 0.1);
+  color: white;
+  transition: all 0.1s ease;
+}
+
+.fav-btn:active {
+  background-color: rgba(0, 255, 204, 0.2);
+  color: white;
+}
+
+.follor-wrapper {
+  width: 110px;
+  position: relative;
+  display: inline-block;
+  margin-left: 340px;
+}
+
+.dropdown-menu {
+  width: 110px;
+  left: 0;
+  background-color: var(--bg-secondary);
+  border-radius: var(--radius-md);
+  box-shadow: var(--shadow-md);
+  z-index: 10;
+}
+
+.dropdown-item {
+  position: relative;        /* 必须，让伪元素相对它定位 */
+  overflow: hidden;          /* 必须，防止波纹溢出按钮 */
+  padding: 10px;
+  text-align: center;
+  cursor: pointer;
+  gap: 5px;
+}
+
+.dropdown-item:hover {
+  background-color: rgba(0, 255, 204, 0.1);
+}
+
+
+.dropdown-item:active {
+  background-color: rgba(0, 255, 204, 0.2);
+  transition: all 0.1s ease;
 }
 </style>

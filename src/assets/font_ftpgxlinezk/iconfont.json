@@ -6,6 +6,27 @@
   "description": "",
   "glyphs": [
     {
+      "icon_id": "7677921",
+      "name": "播放",
+      "font_class": "bofang",
+      "unicode": "e613",
+      "unicode_decimal": 58899
+    },
+    {
+      "icon_id": "7804600",
+      "name": "搁置",
+      "font_class": "gezhi",
+      "unicode": "e6c9",
+      "unicode_decimal": 59081
+    },
+    {
+      "icon_id": "9592594",
+      "name": "HTSCIT_完成",
+      "font_class": "wancheng",
+      "unicode": "e64b",
+      "unicode_decimal": 58955
+    },
+    {
       "icon_id": "11174100",
       "name": "右箭头",
       "font_class": "youjiantou",
@@ -27,11 +48,32 @@
       "unicode_decimal": 59577
     },
     {
+      "icon_id": "12209184",
+      "name": "抛弃",
+      "font_class": "paoqi",
+      "unicode": "e6ca",
+      "unicode_decimal": 59082
+    },
+    {
       "icon_id": "12899645",
       "name": "日历",
       "font_class": "rili",
-      "unicode": "e613",
-      "unicode_decimal": 58899
+      "unicode": "e614",
+      "unicode_decimal": 58900
+    },
+    {
+      "icon_id": "35154353",
+      "name": "收 藏 (已收藏)",
+      "font_class": "a-shoucangyishoucang",
+      "unicode": "e659",
+      "unicode_decimal": 58969
+    },
+    {
+      "icon_id": "38345811",
+      "name": "收 藏_取消收藏",
+      "font_class": "a-shoucang_quxiaoshoucang",
+      "unicode": "e671",
+      "unicode_decimal": 58993
     },
     {
       "icon_id": "46530414",

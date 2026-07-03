@@ -17,7 +17,19 @@ export function getAnimeImageUrl(
   return `https://api.bgm.tv/v0/subjects/${subjectId}/image?type=${type}`
 }
 
-
+// 获取当前已播出集数
+export async function getAnimeCurrentEpisodes(id: number): Promise<number> {
+  try {
+    const response = await bangumiClient.get(`/v0/episodes`, {
+      params: { subject_id: id, type: 0 }, // 0 表示本篇
+    })
+    const episodes = response.data.data || []
+    const today:any = new Date().toISOString().split('T')[0]
+    return episodes.filter((ep: any) => ep.airdate < today).length
+  } catch {
+    return 0
+  }
+}
 
 // 获取当前季度的番剧列表
 export async function getCurrentSeasonAnime() {
@@ -65,8 +77,11 @@ export async function getPopularAnime(limit = 10) {
 
 // 获得番剧的详细信息
 export async function getAnimeById(id:number){
-  const response = await bangumiClient.get(`/v0/subjects/${id}`)
-  const item = response.data
+  const [detailRes, currentEpisodes] = await Promise.all([
+    bangumiClient.get(`/v0/subjects/${id}`),
+    getAnimeCurrentEpisodes(id),
+  ])
+  const item = detailRes.data
   return {
     id: item.id,
     title: item.name_cn || item.name,
@@ -79,6 +94,7 @@ export async function getAnimeById(id:number){
     infobox: item.infobox,
     rating : item.rating,
     meta_tags: item.meta_tags,
-
+    collection:item.collection,
+    current_episodes: currentEpisodes,
   }
 }
