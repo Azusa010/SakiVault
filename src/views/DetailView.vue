@@ -30,6 +30,7 @@
             </div>
           </div>
         </div>
+        <RatingChart :rating="anime?.rating" />
       </div>
       <div class="follor-wrapper" ref="folloWrapperRef">
         <button class="fav-btn" @click="() => (isDropdownOpen = !isDropdownOpen)">
@@ -44,21 +45,36 @@
         </div>
       </div>
     </div>
-    <!-- 剧情简介 -->
-    <!-- <section class="summary">
-      <h2>剧情简介</h2>
-      <p>{{ anime.summary }}</p>
-    </section> -->
+      <div class="anime-detail">
+    <div class="tab-nav">
+      <RouterLink
+      v-for="tab in tabs"
+      :key="tab.value"
+      class="tab-item"
+      :to="{
+        name: `${tab.value}`,
+      }"
+      >
+        {{ tab.label }}
+      </RouterLink>
+    </div>
+    <RouterView :anime="anime" />
   </div>
+  </div>
+
+  <!-- 详情内容 -->
+
 </template>
 
 <script setup lang="ts" name="">
 import { useRoute } from 'vue-router'
 import { getAnimeById } from '@/api/bangumi'
-import { onMounted, ref ,computed } from 'vue'
+import { onMounted, ref, computed } from 'vue'
 import { onClickOutside } from '@vueuse/core'
 import '@/assets/font_ftpgxlinezk/iconfont.css'
 import StarRating from '@/components/StarRating.vue'
+import RatingChart from '@/components/RatingChar.vue'
+import '@/assets/styles/DetailView.css'
 
 const route = useRoute()
 const id = Number(route.params.id)
@@ -92,7 +108,6 @@ onMounted(async () => {
   for (const key in ratingCount) {
     count.value += ratingCount[key] ?? 0
   }
-  console.log(anime.value)
 })
 
 // 追番按钮
@@ -113,191 +128,25 @@ function selectSatus(params: { label: string }) {
   isDropdownOpen.value = false
 }
 
-const currentIcon = computed(()=>{
+const currentIcon = computed(() => {
   const currentStatus = statusList.find((v) => v.label === followStatus.value)
   return currentStatus ? currentStatus.icon : ''
 })
 
-const folloWrapperRef = ref<HTMLElement|null>(null)
+const folloWrapperRef = ref<HTMLElement | null>(null)
 
-onClickOutside(folloWrapperRef,()=>{
+onClickOutside(folloWrapperRef, () => {
   isDropdownOpen.value = false
 })
+
+const activeTab = ref('概览')
+const tabs = [
+  { label: '概览', value: 'overview' },
+  { label: '吐槽', value: 'comments' },
+  { label: '角色', value: 'characters' },
+  { label: '评论', value: 'reviews' },
+  { label: '制作人员', value: 'staff' },
+]
 </script>
 
-<style scoped>
-.detail-view {
-  min-height: 100vh;
-  color: var(--text-main);
-}
-.banner {
-  position: absolute;
-  top: 80px;
-  width: 100%;
-  height: 500px;
-  background-size: cover;
-  background-position: center;
-  display: flex;
-  align-items: flex-end;
-  filter: blur(10px);
-  animation: alternate-reverse bannerMove 30s infinite ease-in-out;
-}
-
-@keyframes bannerMove {
-  0% {
-    background-position: top;
-  }
-  100% {
-    background-position: bottom;
-  }
-}
-
-.banner-overlay {
-  position: absolute;
-  inset: 0;
-  background: linear-gradient(to bottom, rgba(0, 0, 0, 0.5), rgba(17, 22, 34, 1));
-}
-.content {
-  position: relative;
-  display: flex;
-  align-items: flex-start;
-  flex-direction: column;
-  padding: 20px;
-  margin-top: 150px;
-}
-
-.info-card {
-  padding: 0 115px;
-  display: flex;
-  gap: var(--space-xl);
-  margin-top: -103px;
-  position: relative;
-  z-index: 1;
-}
-.poster {
-  width: 200px;
-  aspect-ratio: 3 / 4;
-  object-fit: cover;
-  border-radius: var(--radius-lg);
-  box-shadow: var(--shadow-lg);
-  flex-shrink: 0;
-}
-
-.info-text {
-  padding-top: 0px;
-}
-
-.title {
-  font-size: 2rem;
-  font-weight: 500;
-  margin-bottom: var(--space-md);
-}
-
-.meta {
-  font-size: 16px;
-  display: flex;
-  gap: var(--space-md);
-  color: var(--text-muted);
-  margin-bottom: var(--space-lg);
-  flex-direction: column;
-}
-
-.score {
-  color: var(--color-primary);
-}
-
-.summary-section {
-  margin-top: var(--space-xl);
-  max-width: 800px;
-}
-
-.summary-section h2 {
-  font-size: 1.25rem;
-  margin-bottom: var(--space-md);
-}
-
-.summary-text {
-  line-height: 1.8;
-  color: var(--text-muted);
-}
-
-.summary-text.collapsed {
-  display: -webkit-box;
-  -webkit-line-clamp: 3;
-  -webkit-box-orient: vertical;
-  overflow: hidden;
-}
-
-.toggle-btn {
-  margin-top: var(--space-md);
-  background: transparent;
-  border: none;
-  color: var(--color-primary);
-  cursor: pointer;
-  font-weight: 600;
-}
-
-.episodesBox span {
-  color: white;
-  font-size: 20px;
-}
-
-.fav-btn {
-  width: 110px;
-  height: 45px;
-  border: 2px solid var(--color-primary);
-  border-radius: var(--radius-md);
-  background-color: transparent;
-  text-align: center;
-  color: white;
-  font-size: 18px;
-  cursor: pointer;
-  text-wrap: nowrap;
-}
-
-.fav-btn:hover {
-  background-color: rgba(0, 255, 204, 0.1);
-  color: white;
-  transition: all 0.1s ease;
-}
-
-.fav-btn:active {
-  background-color: rgba(0, 255, 204, 0.2);
-  color: white;
-}
-
-.follor-wrapper {
-  width: 110px;
-  position: relative;
-  display: inline-block;
-  margin-left: 340px;
-}
-
-.dropdown-menu {
-  width: 110px;
-  left: 0;
-  background-color: var(--bg-secondary);
-  border-radius: var(--radius-md);
-  box-shadow: var(--shadow-md);
-  z-index: 10;
-}
-
-.dropdown-item {
-  position: relative;        /* 必须，让伪元素相对它定位 */
-  overflow: hidden;          /* 必须，防止波纹溢出按钮 */
-  padding: 10px;
-  text-align: center;
-  cursor: pointer;
-  gap: 5px;
-}
-
-.dropdown-item:hover {
-  background-color: rgba(0, 255, 204, 0.1);
-}
-
-
-.dropdown-item:active {
-  background-color: rgba(0, 255, 204, 0.2);
-  transition: all 0.1s ease;
-}
-</style>
+<style scoped></style>

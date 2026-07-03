@@ -23,7 +23,7 @@
     </section>
     <!-- 当季新番 -->
     <section class="section">
-      <h2 class="section-title">当季新番</h2>
+      <h2 class="section-title">当下热门</h2>
       <div v-if="loading" class="grid">
         <SkeletonCard v-for="n in 10" :key="n" />
       </div>
@@ -49,7 +49,7 @@
 import HeroCarousel from '@/components/HeroCarousel.vue'
 import { ref, onMounted, reactive } from 'vue'
 import { type Anime } from '@/types/anime'
-import { getCurrentSeasonAnime, getPopularAnime } from '@/api/bangumi'
+import { getCurrentSeasonAnime, getPopularAnime,getRecentPopularAnime } from '@/api/bangumi'
 import { useRouter } from 'vue-router'
 import AnimeCard from '@/components/AnimeCard.vue'
 import SkeletonCard from '@/components/SkeletonCard.vue'
@@ -79,7 +79,7 @@ onMounted(async () => {
   loading.value = true
   popularLoading.value = true
   try {
-    const [current, popular] = await Promise.all([getCurrentSeasonAnime(), getPopularAnime(12)])
+    const [current, popular] = await Promise.all([getRecentPopularAnime(), getPopularAnime(12)])
     currentSeasonAnime.value = current
     popularAnime.value = popular
   } catch (error: any) {

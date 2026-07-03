@@ -1,5 +1,22 @@
 import axios from 'axios'
 
+interface BangumiCollection {
+  on_hold?: number
+  dropped?: number
+  wish?: number
+  collect?: number
+  doing?: number
+}
+
+interface BangumiSubject {
+  id: number
+  name: string
+  name_cn?: string
+  eps?: number
+  rating?: { score?: number }
+  collection?: BangumiCollection
+}
+
 const bangumiClient = axios.create({
   baseURL: 'https://api.bgm.tv',
   headers: {
@@ -8,11 +25,10 @@ const bangumiClient = axios.create({
   },
 })
 
-
 // 获得番剧封面图片的 URL
 export function getAnimeImageUrl(
   subjectId: number,
-  type: 'small' | 'grid' | 'medium' | 'large' | 'common' = 'large'
+  type: 'small' | 'grid' | 'medium' | 'large' | 'common' = 'large',
 ) {
   return `https://api.bgm.tv/v0/subjects/${subjectId}/image?type=${type}`
 }
@@ -24,7 +40,7 @@ export async function getAnimeCurrentEpisodes(id: number): Promise<number> {
       params: { subject_id: id, type: 0 }, // 0 表示本篇
     })
     const episodes = response.data.data || []
-    const today:any = new Date().toISOString().split('T')[0]
+    const today: any = new Date().toISOString().split('T')[0]
     return episodes.filter((ep: any) => ep.airdate < today).length
   } catch {
     return 0
@@ -74,9 +90,59 @@ export async function getPopularAnime(limit = 10) {
   }))
 }
 
+// 合并 rank 和 date 两个维度的近期番剧，按 collection 热度分排序
+export async function getRecentPopularAnime(limit = 60) {
+  const now = new Date()
+  const year = now.getFullYear()
+  const month = now.getMonth() + 1
+
+  const [rankResponse, dateResponse] = await Promise.all([
+    bangumiClient.get('/v0/subjects', {
+      params: { type: 2, sort: 'rank', year, month },
+    }),
+    bangumiClient.get('/v0/subjects', {
+      params: { type: 2, sort: 'date', year, month },
+    }),
+  ])
+
+  const merged = new Map()
+
+  const addItems = (items: BangumiSubject[]) => {
+    for (const item of items || []) {
+      if (!merged.has(item.id)) {
+        merged.set(item.id, item)
+      }
+    }
+  }
+
+  addItems(rankResponse.data.data)
+  addItems(dateResponse.data.data)
+
+  return Array.from(merged.values())
+    .map((item: BangumiSubject) => {
+      const collection = item.collection || {}
+      const heatScore =
+        (collection.on_hold ?? 0) +
+        (collection.dropped ?? 0) +
+        (collection.wish ?? 0) +
+        (collection.collect ?? 0) +
+        (collection.doing ?? 0)
+
+      return {
+        id: item.id,
+        title: item.name_cn || item.name,
+        coverImage: getAnimeImageUrl(item.id, 'large'),
+        averageScore: item.rating?.score,
+        episodes: item.eps,
+        heatScore,
+      }
+    })
+    .sort((a, b) => b.heatScore - a.heatScore)
+    .slice(0, limit)
+}
 
 // 获得番剧的详细信息
-export async function getAnimeById(id:number){
+export async function getAnimeById(id: number) {
   const [detailRes, currentEpisodes] = await Promise.all([
     bangumiClient.get(`/v0/subjects/${id}`),
     getAnimeCurrentEpisodes(id),
@@ -92,9 +158,9 @@ export async function getAnimeById(id:number){
     date: item.date,
     tags: item.tags,
     infobox: item.infobox,
-    rating : item.rating,
+    rating: item.rating,
     meta_tags: item.meta_tags,
-    collection:item.collection,
+    collection: item.collection,
     current_episodes: currentEpisodes,
   }
 }
