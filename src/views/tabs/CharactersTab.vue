@@ -1,6 +1,13 @@
 <template>
-  <div class="w character-tab" style="margin-top:25px">
-    <CharacterCard v-for="char in sortedCharacters" :key="char.id" :character-id="char.id" :actors="char.actors" />
+  <div class="w character-tab" style="margin-top: 25px">
+    <CharacterCard
+      v-for="char in sortedCharacters"
+      :key="char.id"
+      :character-id="char.id"
+      :actors="char.actors"
+      @select="selectedCharacter = $event"
+    />
+    <CharacterDetailSheet :character="selectedCharacter" @close="selectedCharacter = null" />
   </div>
 </template>
 
@@ -8,8 +15,9 @@
 import { watch, ref, computed } from 'vue'
 import { getCharactersById } from '@/api/bangumi'
 import CharacterCard from '@/components/CharacterCard.vue'
+import CharacterDetailSheet from '@/components/CharacterDetailSheet.vue'
 const props = defineProps<{ anime: { id: number } }>()
-
+const selectedCharacter = ref(null)
 const charactersIds = ref<{ actors: []; id: number; relation: string }[]>([])
 const loading = ref(false)
 const error = ref('')
@@ -23,10 +31,9 @@ watch(
     try {
       const res = await getCharactersById(id)
       charactersIds.value =
-      res.data.map((item: { actors: []; id: number; relation: string }) => {
-        return { actors: item.actors, id: item.id, relation: item.relation }
-      }) || []
-
+        res.data.map((item: { actors: []; id: number; relation: string }) => {
+          return { actors: item.actors, id: item.id, relation: item.relation }
+        }) || []
     } catch (e) {
       error.value = '加载失败'
       console.error(e)
@@ -38,28 +45,27 @@ watch(
 )
 
 const RELATION_ORDER: Record<string, number> = {
-  "主角": 1,
-  "配角": 2,
+  主角: 1,
+  配角: 2,
 }
 const DEFAULT_ORDER = 3
 
-function getRelationOrder(relation:string):number{
+function getRelationOrder(relation: string): number {
   return RELATION_ORDER[relation] || DEFAULT_ORDER
 }
 
-const sortedCharacters = computed(()=>{
-  return [...charactersIds.value].sort((a,b)=>{
+const sortedCharacters = computed(() => {
+  return [...charactersIds.value].sort((a, b) => {
     return getRelationOrder(a.relation) - getRelationOrder(b.relation)
   })
 })
-
 </script>
 
 <style scoped>
 .character-tab {
   width: 100%;
   display: grid;
-  grid-template-columns: repeat(3,1fr);
+  grid-template-columns: repeat(3, 1fr);
   gap: 12px;
 }
 </style>

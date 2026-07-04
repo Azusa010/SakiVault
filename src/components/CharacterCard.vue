@@ -4,6 +4,7 @@
     ref="cardRef"
     @mousemove="handleMouseMove"
     @mouseleave="handleMouseLeave"
+    @click="$emit('select',character!)"
   >
     <img
       :src="
@@ -46,7 +47,10 @@ import { getDetailCharacterById } from '@/api/bangumi'
 import { computed, ref, watch } from 'vue'
 const props = defineProps<{ characterId: number; actors: [] }>()
 
-console.log(props.actors)
+const emit = defineEmits<{
+  select: [character: NonNullable<typeof character.value>]
+}>()
+
 
 type InfoboxItem = { key: string; value: string | string[] }
 const character = ref<{
@@ -67,6 +71,7 @@ watch(
     try {
       const res = await getDetailCharacterById(id)
       character.value = res.data
+
     } catch (e) {
       console.error(e)
     }
@@ -125,6 +130,7 @@ const birthday = computed(() => {
   display: flex;
   gap: 12px;
   padding: 14px;
+  cursor: pointer;
   border-radius: var(--radius-md);
   align-items: flex-start;
   width: 97%;
