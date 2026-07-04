@@ -1,12 +1,17 @@
 <template>
   <div class="staff-tab">
     <div class="credits-roll">
-      <div v-for="group in groupedStaff" :key="group.relation" class="credits-group">
-        <h3 class="relation-title">{{ group.relation }}</h3>
-        <div class="names">
-          <span v-for="person in group.persons" :key="person.staff.id">
-            {{ person.staff.nameCN || person.staff.name }}
-          </span>
+      <div v-for="n in 2" :key="'copy-' + n" class="credits-copy">
+        <div v-for="group in groupedStaff" :key="n + '-' + group.relation" class="credits-group">
+          <h3 class="relation-title">{{ group.relation }}</h3>
+          <div class="names">
+            <span
+              v-for="(person, index) in group.persons"
+              :key="n + '-' + group.relation + '-' + index"
+            >
+              {{ person.staff.nameCN||person.staff.name }}
+            </span>
+          </div>
         </div>
       </div>
     </div>
@@ -63,13 +68,14 @@ const groupedStaff = computed(() => {
     transparent 100%
   );
 }
-
-.credits-roll {
-  animation: credits-scroll 40s linear infinite;
-  padding: 60vh 0 40vh;
+.credits-copy {
+  padding: 20vh 0 30vh;
   text-align: center;
 }
-
+.credits-roll {
+  animation: credits-scroll 35s linear infinite;
+  text-align: center;
+}
 
 .credits-group {
   margin-bottom: 48px;
@@ -101,7 +107,7 @@ const groupedStaff = computed(() => {
     transform: translateY(0%);
   }
   100% {
-    transform: translateY(-100%);
+    transform: translateY(-60%);
   }
 }
 </style>
