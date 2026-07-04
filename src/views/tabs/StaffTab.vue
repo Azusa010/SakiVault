@@ -1,5 +1,5 @@
 <template>
-  <div class="staff-tab">
+  <div class="staff-tab" style="margin-top: 60px;">
     <div class="credits-roll">
       <div v-for="n in 2" :key="'copy-' + n" class="credits-copy">
         <div v-for="group in groupedStaff" :key="n + '-' + group.relation" class="credits-group">

@@ -9,6 +9,7 @@ const proxyAgent = new HttpsProxyAgent('http://localhost:7897')
 
 // https://vite.dev/config/
 export default defineConfig({
+  base: '/SakiVault/',
   plugins: [vue(), vueJsx(), vueDevTools()],
   resolve: {
     alias: {

@@ -1,5 +1,5 @@
 <template>
-  <div class="w overview-tab">
+  <div class="w overview-tab" style="margin-top: 30px;">
     <section class="summary-section" v-if="anime.summary">
       <h2>剧情简介</h2>
       <p class="summary-text">{{ anime.summary }}</p>
