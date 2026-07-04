@@ -207,3 +207,14 @@ export async function getDetailCharacterById(id:number){
   const response = await bangumiClient.get(`/v0/characters/${id}`)
   return response
 }
+
+// 获得Staff信息
+export async function getStaffById(id:number){
+ const response = await bangumiPrivateClient.get(`/subjects/${id}/staffs/persons`,{
+  params:{
+    limit:100
+  }
+ })
+ return response
+
+}
