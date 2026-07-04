@@ -164,7 +164,6 @@ function updateIndicator() {
   indicator.style.width = `${active.offsetWidth}px`
   indicator.style.transform = `translateX(${active.offsetLeft}px)`
 
-  console.log(active.offsetWidth, active.offsetLeft)
 
   if(!indicatorReady.value ){
     indicator.style.transition='none'

@@ -25,6 +25,13 @@ const bangumiClient = axios.create({
   },
 })
 
+const bangumiPrivateClient = axios.create({
+  baseURL: '/p1',
+  headers: {
+    Accept: 'application/json',
+  }
+})
+
 // 获得番剧封面图片的 URL
 export function getAnimeImageUrl(
   subjectId: number,
@@ -163,4 +170,17 @@ export async function getAnimeById(id: number) {
     collection: item.collection,
     current_episodes: currentEpisodes,
   }
+}
+
+
+// 获得番剧吐槽信息
+export async function getCommentsById(id:number){
+  const response = await bangumiPrivateClient.get(`/subjects/${id}/comments`,
+    {
+      params:{
+        limit:100,
+      }
+    }
+  )
+  return response.data
 }
