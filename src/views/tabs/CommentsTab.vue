@@ -1,5 +1,6 @@
 <template>
-  <div class="">
+  <div class="comments-tab w">
+    111111111111111111111111
 
   </div>
 </template>
@@ -9,4 +10,5 @@
 </script>
 
 <style scoped>
+
 </style>

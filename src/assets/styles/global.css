@@ -104,3 +104,7 @@ a:hover {
 ::-webkit-scrollbar {
   display: none;
 }
+
+.w {
+  padding: 0 115px;
+}

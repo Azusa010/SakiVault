@@ -28,10 +28,6 @@ defineProps<{
 </script>
 
 <style scoped>
-.w {
-  padding: 0 115px;
-}
-
 .overview-tab {
   padding: 0 115px;
   display: flex;
