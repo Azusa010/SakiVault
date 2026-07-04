@@ -23,7 +23,7 @@ import { getStaffById } from '@/api/bangumi'
 import { watch, ref, computed } from 'vue'
 
 const props = defineProps<{ anime: { id: number } }>()
-const staff = ref<{ positions: []; staff: { nameCN: string } }[]>([])
+const staff = ref<{ positions: Array<any>; staff: { nameCN: string } }[]>([])
 
 watch(
   () => props.anime?.id,

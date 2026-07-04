@@ -77,8 +77,8 @@ export async function getCurrentSeasonAnime() {
     id: item.id,
     title: item.name_cn || item.name,
     coverImage: getAnimeImageUrl(item.id, 'large'),
-    averageScore: item.rating?.score,
-    episodes: item.eps ?? item.eps_count,
+    averageScore: item.rating?.score ?? 0,
+    episodes: item.eps ?? item.eps_count ?? 0,
   }))
 }
 

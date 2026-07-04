@@ -2,7 +2,7 @@ export interface Anime {
   id:number;
   title:string;
   coverImage:string;
-  averageScore:number;
+  averageScore?:number;
   episodes?:number;
 }
 
@@ -12,6 +12,10 @@ export interface Comment {
   rate: number
   type: number
   updatedAt: number
+  entry?: {
+    summary: string
+    updatedAt: number
+  }
   user: {
     avatar: {
       large: string

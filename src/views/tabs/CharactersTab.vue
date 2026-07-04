@@ -17,7 +17,7 @@ import { getCharactersById } from '@/api/bangumi'
 import CharacterCard from '@/components/CharacterCard.vue'
 import CharacterDetailSheet from '@/components/CharacterDetailSheet.vue'
 const props = defineProps<{ anime: { id: number } }>()
-const selectedCharacter = ref(null)
+const selectedCharacter = ref<any>(null)
 const charactersIds = ref<{ actors: []; id: number; relation: string }[]>([])
 const loading = ref(false)
 const error = ref('')

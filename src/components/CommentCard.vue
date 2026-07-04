@@ -1,6 +1,6 @@
 <template>
   <div class="comment-card">
-    <img :src="comment.user.avatar.medium" :alt="comment.user.name" class="avatar" />
+    <img :src="comment.user.avatar.medium" :alt="comment.user.nickname" class="avatar" />
     <div class="body">
       <div class="name" style="display: flex; align-items: flex-end; gap: 0px; margin:-4px 0 2px 0">{{ comment.user.nickname }}<span style="font-size: 14px; color: #aaa;">@{{ type(comment.type) }}</span></div>
       <div class="comment-time" style="color: rgba(255, 255, 255, 0.6);">{{ formatRelativeTime(comment.updatedAt) }}</div>

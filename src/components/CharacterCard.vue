@@ -45,7 +45,7 @@
 <script setup lang="ts" name="">
 import { getDetailCharacterById } from '@/api/bangumi'
 import { computed, ref, watch } from 'vue'
-const props = defineProps<{ characterId: number; actors: [] }>()
+const props = defineProps<{ characterId: number; actors: Array<{ name: string }> }>()
 
 const emit = defineEmits<{
   select: [character: NonNullable<typeof character.value>]
