@@ -103,6 +103,7 @@ const anime = ref<Anime | null>(null)
 const count = ref(0)
 onMounted(async () => {
   anime.value = await getAnimeById(id)
+
   const ratingCount = anime.value?.rating?.count
   if (!ratingCount) return
   for (const key in ratingCount) {

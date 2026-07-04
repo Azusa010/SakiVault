@@ -61,7 +61,7 @@ html {
 body {
   /* 字体族：优先现代无衬线字体，兼顾系统原生清晰度 */
   font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
-  font-weight: 500;          /* AniList 偏爱略有厚度的字重，显得更精致 */
+  font-weight: 450;
   line-height: 1.5;
   font-size: 1rem;
   /* 背景与文字基准 */

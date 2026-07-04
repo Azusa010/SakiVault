@@ -184,3 +184,16 @@ export async function getCommentsById(id:number){
   )
   return response.data
 }
+
+
+// 获得番剧角色信息
+export async function getCharactersById(id:number){
+  const response = await bangumiClient.get(`/v0/subjects/${id}/characters`)
+  return response
+}
+
+// 获得角色详细信息
+export async function getDetailCharacterById(id:number){
+  const response = await bangumiClient.get(`/v0/characters/${id}`)
+  return response
+}
