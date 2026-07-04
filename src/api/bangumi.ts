@@ -91,7 +91,7 @@ export async function getPopularAnime(limit = 10) {
 }
 
 // 合并 rank 和 date 两个维度的近期番剧，按 collection 热度分排序
-export async function getRecentPopularAnime(limit = 60) {
+export async function getRecentPopularAnime(limit = 30) {
   const now = new Date()
   const year = now.getFullYear()
   const month = now.getMonth() + 1

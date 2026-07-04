@@ -2,6 +2,7 @@
   <div class="home-view">
     <!-- Hero轮播图 -->
     <HeroCarousel :items="currentSeasonAnime.slice(0, 5)" />
+    <div class="hero-spacer" style="position: relative; width: 1px; height: 100vh; pointer-events: none;"></div>
     <!-- Hero区域 -->
     <section class="hero">
       <div class="hero-content">

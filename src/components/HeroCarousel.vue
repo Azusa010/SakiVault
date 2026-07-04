@@ -1,12 +1,12 @@
 <template>
-  <div class="hero-carousel">
+  <div class="hero-carousel" :style="{ opacity: opacity ,transform: `scale(${1 + (1 - opacity) * 0.05})`, transition: 'opacity 0.5s ease-in-out' }">
     <div class="images" :style="trackStyle">
-      <div class="slide" v-for="item in props.items" :key="item.id">
+      <RouterLink class="slide" v-for="item in props.items" :key="item.id" :to="`/anime/${item.id}`">
         <img :src="item.coverImage" :alt="item.title" />
         <div class="slide-info">
           <h3>{{ item.title }}</h3>
         </div>
-      </div>
+      </RouterLink>
     </div>
     <button class="arrow arrow-left" @click="prev">
       <span class="iconfont icon-youjiantou"></span>
@@ -27,10 +27,11 @@
 
 <script setup lang="ts">
 import { type Anime } from '@/types/anime'
-import { computed, ref, onUnmounted } from 'vue'
+import { computed, ref, onUnmounted ,onMounted } from 'vue'
 import '@/assets/font_ftpgxlinezk/iconfont.css'
 
 onUnmounted(() => {
+  window.removeEventListener('scroll', updateOpacity)
   clearTimeout(timeOut)
   clearInterval(timer)
 })
@@ -77,11 +78,27 @@ function startTimer() {
     currentIndex.value = (currentIndex.value + 1) % props.items.length
   }, 5000)
 }
+
+const scrollY = ref(0)
+
+function updateOpacity(){
+  scrollY.value = window.scrollY
+}
+
+onMounted(() => {
+  window.addEventListener('scroll', updateOpacity)
+})
+
+const opacity = computed(() => {
+  const fadeDistance = window.innerHeight * 0.95
+  return Math.max(0, 1 - scrollY.value / fadeDistance)
+})
 </script>
 
 <style scoped>
 .hero-carousel {
-  position: relative;
+  position: fixed;
+  inset:0;
   width: 100%;
   height: 100vh;
   overflow: hidden;
@@ -153,16 +170,16 @@ function startTimer() {
 
 .dots {
   position: absolute;
-  bottom: 16px;
+  bottom: 50px;
   left: 50%;
   transform: translateX(-50%);
   display: flex;
-  gap: 8px;
+  gap: 9px;
 }
 
 .dots button {
-  width: 10px;
-  height: 10px;
+  width: 15px;
+  height: 15px;
   border-radius: 50%;
   border: none;
   background: rgba(255, 255, 255, 0.4);

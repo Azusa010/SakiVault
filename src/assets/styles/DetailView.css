@@ -210,3 +210,9 @@
   background-color: var(--color-primary);
   border-radius: 2px;
 }
+
+
+.rating-chart {
+  position: absolute;
+  right:115px;
+}

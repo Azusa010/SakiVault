@@ -30,7 +30,7 @@
             </div>
           </div>
         </div>
-        <RatingChart :rating="anime?.rating" />
+        <RatingChart :rating="anime?.rating" class="rating-chart"/>
       </div>
       <div class="follor-wrapper" ref="folloWrapperRef">
         <button class="fav-btn" @click="() => (isDropdownOpen = !isDropdownOpen)">
