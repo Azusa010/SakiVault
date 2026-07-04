@@ -1,8 +1,8 @@
 <template>
   <div class="w overview-tab">
-    <section class="summary-section">
+    <section class="summary-section" v-if="anime.summary">
       <h2>剧情简介</h2>
-      <p class="summary-text" v-if="anime?.summary">{{ anime.summary }}</p>
+      <p class="summary-text">{{ anime.summary }}</p>
     </section>
     <section class="tags-section">
       <h2>标签</h2>

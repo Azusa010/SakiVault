@@ -168,9 +168,12 @@ function updateIndicator() {
 
   if(!indicatorReady.value ){
     indicator.style.transition='none'
-    void indicator.offsetWidth
-    indicator.style.transition=''
-    indicatorReady.value = true
+    requestAnimationFrame(()=>{
+      requestAnimationFrame(()=>{
+        indicator.style.transition=''
+        indicatorReady.value = true
+      })
+    })
   }
 }
 
