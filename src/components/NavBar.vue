@@ -31,7 +31,7 @@ import { RouterLink } from 'vue-router'
 .nav-container {
   max-width: 1280px;
   height: 100%;
-  margin: 0 auto;
+  margin: 0 115px;
   padding: 0 var(--space-xs);
   display: flex;
   align-items: center;

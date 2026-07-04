@@ -100,3 +100,7 @@ a:hover {
   fill: currentColor;
   overflow: hidden;
 }
+
+::-webkit-scrollbar {
+  display: none;
+}

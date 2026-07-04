@@ -156,8 +156,8 @@
 }
 
 .dropdown-item {
-  position: relative;        /* 必须，让伪元素相对它定位 */
-  overflow: hidden;          /* 必须，防止波纹溢出按钮 */
+  position: relative; /* 必须，让伪元素相对它定位 */
+  overflow: hidden; /* 必须，防止波纹溢出按钮 */
   padding: 10px;
   text-align: center;
   cursor: pointer;
@@ -168,14 +168,13 @@
   background-color: rgba(0, 255, 204, 0.1);
 }
 
-
 .dropdown-item:active {
   background-color: rgba(0, 255, 204, 0.2);
   transition: all 0.1s ease;
 }
 
-
 .tab-nav {
+  position: relative;
   display: flex;
   justify-content: center;
   gap: 40px;
@@ -195,24 +194,25 @@
   color: var(--color-primary);
 }
 
-.tab-item.active {
+.tab-item.router-link-active {
   color: var(--color-primary);
 }
 
-.tab-item.active::after {
-  content: '';
+.tab-indicator {
   position: absolute;
-  bottom: -16px;
-  left: 50%;
-  transform: translateX(-50%);
-  width: 24px;
+  left: 0;
+  bottom: 0px;
   height: 3px;
   background-color: var(--color-primary);
   border-radius: 2px;
+  opacity: 1;
+  transition:
+    transform 0.3s cubic-bezier(0.16, 1, 0.3, 1),
+    width 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+    opacity: 0.2s ease;
 }
-
 
 .rating-chart {
   position: absolute;
-  right:115px;
+  right: 115px;
 }

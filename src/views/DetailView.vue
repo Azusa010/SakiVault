@@ -30,7 +30,7 @@
             </div>
           </div>
         </div>
-        <RatingChart :rating="anime?.rating" class="rating-chart"/>
+        <RatingChart :rating="anime?.rating" class="rating-chart" />
       </div>
       <div class="follor-wrapper" ref="folloWrapperRef">
         <button class="fav-btn" @click="() => (isDropdownOpen = !isDropdownOpen)">
@@ -45,32 +45,32 @@
         </div>
       </div>
     </div>
-      <div class="anime-detail">
-    <div class="tab-nav">
-      <RouterLink
-      v-for="tab in tabs"
-      :key="tab.value"
-      class="tab-item"
-      :to="{
-        name: `${tab.value}`,
-      }"
-      >
-        {{ tab.label }}
-      </RouterLink>
+    <div class="anime-detail">
+      <div class="tab-nav" ref="tabNavRef">
+        <RouterLink
+          v-for="tab in tabs"
+          :key="tab.value"
+          class="tab-item"
+          :to="{
+            name: `${tab.value}`,
+          }"
+        >
+          {{ tab.label }}
+        </RouterLink>
+        <div class="tab-indicator" ref="tabIndicator"></div>
+      </div>
+      <RouterView :anime="anime" />
     </div>
-    <RouterView :anime="anime" />
-  </div>
   </div>
 
   <!-- 详情内容 -->
-
 </template>
 
 <script setup lang="ts" name="">
 import { useRoute } from 'vue-router'
 import { getAnimeById } from '@/api/bangumi'
-import { onMounted, ref, computed } from 'vue'
-import { onClickOutside } from '@vueuse/core'
+import { onMounted, ref, computed, nextTick, watch } from 'vue'
+import { onClickOutside, useResizeObserver } from '@vueuse/core'
 import '@/assets/font_ftpgxlinezk/iconfont.css'
 import StarRating from '@/components/StarRating.vue'
 import RatingChart from '@/components/RatingChar.vue'
@@ -108,6 +108,7 @@ onMounted(async () => {
   for (const key in ratingCount) {
     count.value += ratingCount[key] ?? 0
   }
+  nextTick(updateIndicator)
 })
 
 // 追番按钮
@@ -139,7 +140,6 @@ onClickOutside(folloWrapperRef, () => {
   isDropdownOpen.value = false
 })
 
-const activeTab = ref('概览')
 const tabs = [
   { label: '概览', value: 'overview' },
   { label: '吐槽', value: 'comments' },
@@ -147,6 +147,43 @@ const tabs = [
   { label: '评论', value: 'reviews' },
   { label: '制作人员', value: 'staff' },
 ]
+
+// tab指示器
+const tabNavRef = ref<HTMLElement | null>(null)
+const tabIndicator = ref<HTMLElement | null>(null)
+const indicatorReady = ref(false)
+
+function updateIndicator() {
+  const nav = tabNavRef.value
+  const indicator = tabIndicator.value
+  if (!nav || !indicator) return
+
+  const active = nav.querySelector<HTMLElement>('.tab-item.router-link-active')
+  if (!active) return
+
+  indicator.style.width = `${active.offsetWidth}px`
+  indicator.style.transform = `translateX(${active.offsetLeft}px)`
+
+  console.log(active.offsetWidth, active.offsetLeft)
+
+  if(!indicatorReady.value ){
+    indicator.style.transition='none'
+    void indicator.offsetWidth
+    indicator.style.transition=''
+    indicatorReady.value = true
+  }
+}
+
+watch(
+  () => route.name,
+  () => {
+    nextTick(updateIndicator)
+  },
+)
+
+useResizeObserver(tabNavRef, () => {
+  nextTick(updateIndicator)
+})
 </script>
 
 <style scoped></style>

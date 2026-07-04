@@ -1,5 +1,5 @@
 <template>
-  <div class="hero-carousel" :style="{ opacity: opacity ,transform: `scale(${1 + (1 - opacity) * 0.05})`, transition: 'opacity 0.5s ease-in-out' }">
+  <div class="hero-carousel" :style="{ opacity: opacity ,transform: `scale(${1 + (1 - opacity) * 0.05})`, transition: 'opacity 0.15s ease-in-out' }" v-if="opacity!=0">
     <div class="images" :style="trackStyle">
       <RouterLink class="slide" v-for="item in props.items" :key="item.id" :to="`/anime/${item.id}`">
         <img :src="item.coverImage" :alt="item.title" />
@@ -90,7 +90,7 @@ onMounted(() => {
 })
 
 const opacity = computed(() => {
-  const fadeDistance = window.innerHeight * 0.95
+  const fadeDistance = window.innerHeight * 0.9
   return Math.max(0, 1 - scrollY.value / fadeDistance)
 })
 </script>

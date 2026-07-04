@@ -10,6 +10,8 @@
 <script setup lang="ts" name="">
 import NavBar from './components/NavBar.vue';
 import { RouterView } from 'vue-router';
+
+
 </script>
 
 <style scoped>
