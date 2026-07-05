@@ -15,7 +15,7 @@
           <h1 class="title">{{ anime.title }}</h1>
           <div class="meta">
             <div class="scoreBox" style="display: flex; flex-direction: column; gap: 0px">
-              <span v-if="count">{{ count }} 人评分:</span>
+              <span v-if="count">{{ count }} 人评分: {{ anime.averageScore?.toFixed(1) }}分</span>
               <StarRating v-if="anime.averageScore" :score="anime.averageScore" />
             </div>
             <div class="dateBox" style="display: flex; flex-direction: column; gap: 0px">
@@ -165,12 +165,11 @@ function updateIndicator() {
   indicator.style.width = `${active.offsetWidth}px`
   indicator.style.transform = `translateX(${active.offsetLeft}px)`
 
-
-  if(!indicatorReady.value ){
-    indicator.style.transition='none'
-    requestAnimationFrame(()=>{
-      requestAnimationFrame(()=>{
-        indicator.style.transition=''
+  if (!indicatorReady.value) {
+    indicator.style.transition = 'none'
+    requestAnimationFrame(() => {
+      requestAnimationFrame(() => {
+        indicator.style.transition = ''
         indicatorReady.value = true
       })
     })
