@@ -21,15 +21,14 @@
 </template>
 
 <script setup lang="ts" name="SearchView">
-import { watch } from 'vue'
-import { useRoute, useRouter } from 'vue-router'
+import { watch, onMounted } from 'vue'
+import { useRoute, useRouter, } from 'vue-router'
 import SearchForm from '@/components/SearchForm.vue'
 import SearchResults from '@/components/SearchResults.vue'
 import { useAnimeSearch } from '@/composables/useAnimeSearch'
 
 const route = useRoute()
 const router = useRouter()
-
 const {
   keyword,
   year,
@@ -67,12 +66,12 @@ function getQueryStringArray(value: unknown) {
 }
 
 watch([keyword, year, rating, tags], () => {
-  const query: Record<string, string> = {}
+  const query: Record<string, string | string[]> = {}
 
   if (keyword.value.trim()) query.keyword = keyword.value.trim()
   if (year.value) query.year = year.value
   if (rating.value) query.rating = String(rating.value)
-  if (tags.value!.length > 0) query.tag = tags.value
+  if (tags.value && tags.value.length > 0) query.tag = tags.value
 
   router.replace({ query })
 })
@@ -80,6 +79,8 @@ watch([keyword, year, rating, tags], () => {
 function handleLoadMore() {
   loadMore()
 }
+
+
 </script>
 
 <style scoped></style>

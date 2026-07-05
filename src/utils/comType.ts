@@ -1,7 +1,7 @@
 export function type(type:number) {
   switch (type) {
     case 1:
-      return '未追'
+      return '想看'
     case 2:
       return '看过'
     case 3:
@@ -11,7 +11,7 @@ export function type(type:number) {
     case 5:
       return '抛弃'
     default:
-      return '未知'
+      return '未看'
   }
 
 }

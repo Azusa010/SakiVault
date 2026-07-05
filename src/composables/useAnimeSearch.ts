@@ -53,7 +53,7 @@ export function useAnimeSearch(options: UseAnimeSearchOptions = {}) {
         keyword: keyword.value,
         year: year.value,
         rating: rating.value,
-        tag: tags.value,
+        tags: tags.value,
         limit: LIMIT,
         offset: offset.value,
       })

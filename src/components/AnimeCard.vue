@@ -6,7 +6,7 @@
     <div class="info">
       <h3 class="title">{{ anime.title }}</h3>
       <div class="meta">
-        <span v-if="anime.averageScore" class="score">{{ anime.averageScore }}⭐</span>
+        <span v-if="anime.averageScore" class="score">{{ anime.averageScore }}分</span>
         <span v-if="anime.episodes">{{ anime.episodes }} 集</span>
       </div>
     </div>
@@ -59,17 +59,19 @@ defineProps<{
   -webkit-line-clamp: 2;
   -webkit-box-orient: vertical;
   overflow: hidden;
-  font-size: 0.95rem;
+  text-overflow: ellipsis;
+  font-size: 0.97rem;
   color: var(--text-main);
-  margin: var(--space-sm) 0;
+  margin: var(--space-sm) 0 2px 0;
   padding: 0 var(--space-sm);
 }
 
 .meta {
   display: flex;
   gap: var(--space-sm);
-  font-size: 0.85rem;
+  font-size: 0.89rem;
   color: var(--text-muted);
+  padding: 0 var(--space-sm);
 }
 
 .score {

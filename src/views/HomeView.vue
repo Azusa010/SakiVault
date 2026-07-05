@@ -7,7 +7,7 @@
     <section class="hero">
       <div class="hero-content">
         <h1 class="hero-title">SakiVault</h1>
-        <p class="hero-subtitle">发现你的下一部神作</p>
+        <p class="hero-subtitle">  </p>
         <!-- 搜索栏 -->
         <section class="search-section">
           <div class="search-box">
@@ -17,7 +17,11 @@
               placeholder="搜索番剧..."
               @keyup.enter="handleSearch"
             />
-            <button @click="handleSearch">搜索</button>
+            <div class="btn-container">
+              <a @click="handleSearch" class="search-btn">搜索
+                <span v-for="s in 40" :key="s" :style="{top: s * 1.375 + 'px',transitionDelay: Math.random() * 0.5 + 's'}"></span>
+              </a>
+            </div>
           </div>
         </section>
       </div>
@@ -48,7 +52,7 @@
 
 <script setup lang="ts" name="HomeView">
 import HeroCarousel from '@/components/HeroCarousel.vue'
-import { ref, onMounted, reactive } from 'vue'
+import { ref, onMounted} from 'vue'
 import { type Anime } from '@/types/anime'
 import { getCurrentSeasonAnime, getPopularAnime,getRecentPopularAnime } from '@/api/bangumi'
 import { useRouter } from 'vue-router'
@@ -64,7 +68,7 @@ function handleSearch() {
   if (query !== '') {
     router.push({
       path: '/search',
-      query: { q: query },
+      query: { keyword: query },
     })
   }
 }
@@ -118,15 +122,62 @@ onMounted(async () => {
 }
 
 .search-section {
-  max-width: 1280px;
+  width: 100vh;
   margin: 0 auto;
   padding: var(--space-xl) var(--space-md);
 }
 .search-box {
   display: flex;
   gap: var(--space-sm);
-  max-width: 520px;
+  max-width: 720px;
+  height: 55px;
   margin: 0 auto;
+  transition: all 0.5s ease-in-out;
+}
+
+.search-box:focus-within {
+  max-width: 900px;
+}
+
+.btn-container {
+  position: relative;
+  display: flex;
+}
+.search-btn {
+  position: relative;
+  width: 110px;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  cursor: pointer;
+  background-color: rgba(25, 33, 50, 0.1);
+  font-size: 1.2rem;
+  font-weight: normal;
+  transition: 0.2s;
+  transition-delay: 0.2s;
+}
+
+.search-btn:hover {
+  filter: drop-shadow(0 0 10px #00ffcc) drop-shadow(0 0 30px #00ffcc);
+  color: rgb(25, 33, 50);
+}
+
+.search-btn span {
+  position: absolute;
+  left: 0;
+  width: 100%;
+  height: 1.375px;
+  background-color: #00ffcc;
+  z-index: -1;
+  transform: scale(0);
+  transform-origin: right;
+  transition: transform 0.3s ease-in-out;
+
+}
+
+.search-btn:hover span {
+  transform: scale(1);
+  transform-origin: left;
 }
 
 .search-box input {
@@ -137,26 +188,15 @@ onMounted(async () => {
   background-color: var(--surface-card);
   color: var(--text-main);
   font-size: 1rem;
+  width: 600px;
 }
 
 .search-box input:focus {
   outline: 2px solid var(--color-primary);
 }
 
-.search-box button {
-  padding: var(--space-sm) var(--space-lg);
-  border-radius: var(--radius-md);
-  border: none;
-  background-color: var(--color-primary);
-  color: white;
-  font-weight: 600;
-  cursor: pointer;
-  transition: background-color var(--duration-fast);
-}
 
-.search-box button:hover {
-  background-color: var(--color-primary-hover);
-}
+
 
 .section {
   padding: var(--space-xl) var(--space-md);

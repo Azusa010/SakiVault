@@ -78,7 +78,7 @@ export async function getCurrentSeasonAnime() {
   return detailedItems.map((item: any) => ({
     id: item.id,
     title: item.name_cn || item.name,
-    coverImage: getAnimeImageUrl(item.id, 'large'),
+    coverImage: getAnimeImageUrl(item.id, 'medium'),
     averageScore: item.rating?.score ?? 0,
     episodes: item.eps ?? item.eps_count ?? 0,
   }))

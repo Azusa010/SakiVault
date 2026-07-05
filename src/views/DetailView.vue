@@ -33,16 +33,24 @@
         <RatingChart :rating="anime?.rating" class="rating-chart" />
       </div>
       <div class="follor-wrapper" ref="folloWrapperRef">
-        <button class="fav-btn" @click="() => (isDropdownOpen = !isDropdownOpen)">
+        <button class="fav-btn" @click="clickBtn($event)" ref="btnRef">
+          <span
+            v-for="p in particles"
+            :key="p.id"
+            class="particle"
+            :style="{ left: `${p.x}px`, top: `${p.y}px`, '--tx': `${p.tx}px`, '--ty': `${p.ty}px` }"
+          ></span>
           <span :class="`iconfont ${currentIcon}`"></span>
           {{ followStatus }}
         </button>
-        <div class="dropdown-menu" v-if="isDropdownOpen">
-          <div class="dropdown-item" v-for="v in statusList" :key="v.label" @click="selectSatus(v)">
+        <Transition name="dropdown">
+          <div class="dropdown-menu" v-if="isDropdownOpen">
+          <div class="dropdown-item" v-for="(v,index) in statusList" :key="v.label" @click="selectSatus(v)" :style="{'--index':index}">
             <span :class="`iconfont ${v.icon}`"></span>
             {{ v.label }}
           </div>
         </div>
+        </Transition>
       </div>
     </div>
     <div class="anime-detail">
@@ -62,7 +70,6 @@
       <RouterView :anime="anime" />
     </div>
   </div>
-
   <!-- 详情内容 -->
 </template>
 
@@ -186,6 +193,46 @@ watch(
 useResizeObserver(tabNavRef, () => {
   nextTick(updateIndicator)
 })
+
+interface Particle {
+  id: number
+  x: number
+  y: number
+  tx: number
+  ty: number
+}
+
+const particles = ref<Particle[]>([])
+let pid = 0
+
+function spawnParticles(x: number, y: number, count = 28) {
+  for (let i = 0; i < count; i++) {
+    const angle = Math.random() * 2 * Math.PI
+    const distance = 20 + Math.random() * 80
+    const p: Particle = {
+      id: pid++,
+      x,
+      y,
+      tx: Math.cos(angle) * distance,
+      ty: Math.sin(angle) * distance,
+    }
+    particles.value.push(p)
+
+    // 动画结束后移除
+    setTimeout(() => {
+      particles.value = particles.value.filter((item) => item.id !== p.id)
+    }, 1000)
+  }
+}
+
+function clickBtn(e: MouseEvent) {
+  isDropdownOpen.value = !isDropdownOpen.value
+  const btn = e.currentTarget as HTMLElement
+  const rect = btn.getBoundingClientRect()
+  const x = e.clientX - rect.left
+  const y = e.clientY - rect.top
+  spawnParticles(x, y)
+}
 </script>
 
 <style scoped></style>

@@ -7,7 +7,9 @@
     </div>
     <!-- 首次加载 -->
     <div v-else-if="loading && results.length === 0" class="state-message">
-      <p>搜索中...</p>
+      <div class="results-grid">
+        <SkeletonCard v-for="n in 10" :key="n"/>
+      </div>
     </div>
     <!-- 还没搜 -->
     <div v-else-if="!hasActiveFilter && results.length === 0" class="state-message">
@@ -40,6 +42,7 @@
 
 <script setup lang="ts" name="SearchResults">
 import { type Anime } from '@/types/anime'
+import SkeletonCard from './SkeletonCard.vue';
 import AnimeCard from './AnimeCard.vue'
 
 defineProps<{
@@ -73,7 +76,6 @@ const handleRetry = () => {
 
 .state-message {
   text-align: center;
-  padding: var(--space-xl) 0;
   color: var(--text-muted);
 }
 

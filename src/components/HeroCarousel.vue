@@ -1,5 +1,5 @@
 <template>
-  <div class="hero-carousel" :style="{ opacity: opacity ,transform: `scale(${1 + (1 - opacity) * 0.05})`, transition: 'opacity 0.15s ease-in-out' }" v-if="opacity!=0">
+  <div class="hero-carousel" :class="{'is-disabled':isDisabled}" ref="hero-carousel" :style="{ opacity: opacity ,transform: `scale(${1 + (1 - opacity) * 0.05})`, transition: 'opacity 0.15s ease-in-out' }" v-if="opacity!=0">
     <div class="images" :style="trackStyle">
       <RouterLink class="slide" v-for="item in props.items" :key="item.id" :to="`/anime/${item.id}`">
         <img :src="item.coverImage" :alt="item.title" />
@@ -8,12 +8,16 @@
         </div>
       </RouterLink>
     </div>
-    <button class="arrow arrow-left" @click="prev">
+    <Transition name="fly-left">
+      <button class="arrow arrow-left" @click="prev" v-if="scrollY===0">
       <span class="iconfont icon-youjiantou"></span>
     </button>
-    <button class="arrow arrow-right" @click="next">
-      <span class="iconfont icon-zuojiantou"></span>
-    </button>
+    </Transition>
+    <Transition name="fly-right">
+      <button class="arrow arrow-right" @click="next" v-if="scrollY===0">
+        <span class="iconfont icon-zuojiantou"></span>
+      </button>
+    </Transition>
     <div class="dots">
       <button
         v-for="(item, index) in props.items"
@@ -27,7 +31,7 @@
 
 <script setup lang="ts">
 import { type Anime } from '@/types/anime'
-import { computed, ref, onUnmounted ,onMounted } from 'vue'
+import { computed, ref, onUnmounted ,onMounted, watch } from 'vue'
 import '@/assets/font_ftpgxlinezk/iconfont.css'
 
 onUnmounted(() => {
@@ -93,9 +97,19 @@ const opacity = computed(() => {
   const fadeDistance = window.innerHeight * 0.8
   return Math.max(0, 1 - scrollY.value / fadeDistance)
 })
+
+const isDisabled = ref(false)
+
+watch(scrollY,()=>{
+  isDisabled.value = scrollY.value !== 0
+})
 </script>
 
 <style scoped>
+.is-disabled {
+  pointer-events: none;
+}
+
 .hero-carousel {
   position: fixed;
   inset:0;
@@ -190,4 +204,31 @@ const opacity = computed(() => {
 .dots button.active {
   background: white;
 }
+
+.fly-left-enter-active,
+.fly-left-leave-active,
+.fly-right-enter-active,
+.fly-right-leave-active {
+  transition: all 0.45s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+
+.fly-left-enter-from,
+.fly-left-leave-to {
+  opacity: 0;
+  transform: translateY(-50%) translateX(-100px) scale(0.8);
+}
+
+.fly-right-enter-from,
+.fly-right-leave-to {
+  opacity: 0;
+  transform: translateY(-50%) translateX(100px) scale(0.8);
+}
+
+
+.fly-left-leave-active,
+.fly-right-leave-active {
+  pointer-events: none;
+}
+
 </style>
