@@ -1,6 +1,6 @@
 <template>
   <div class="search-view w">
-    <SearchForm />
+    <SearchForm v-model:keyword="keyword" v-model:year="year" v-model:rating="rating" v-model:tag="tag" @reset="resetFilters" />
   </div>
 </template>
 

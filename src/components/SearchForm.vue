@@ -1,6 +1,6 @@
 <template>
   <div class="search-form">
-    <!-- 搜索栏 -->
+    <!-- 搜索框 -->
     <div class="search-box">
       <svg class="search-icon" viewBox="0 0 24 24" aria-hidden="true">
         <path
@@ -10,10 +10,70 @@
       </svg>
       <input type="text" placeholder="搜索番剧..." />
     </div>
+
+    <!-- 筛选器 -->
+    <div class="filters">
+      <!-- 年份 -->
+      <div class="filter-row">
+        <span class="filter-label">年份</span>
+        <div class="chip-group"></div>
+      </div>
+      <!-- 评分 -->
+      <div class="filter-row">
+        <span class="filter-label">评分</span>
+        <div class="chip-group"></div>
+      </div>
+    </div>
   </div>
 </template>
 
-<script setup lang="ts" name=""></script>
+<script setup lang="ts" name="SearchForm">
+import { computed } from 'vue';
+
+interface Props {
+  keyword: string
+  year?: string
+  rating?: number
+  tag?: string
+}
+
+const emit = defineEmits<{
+  'update:keyword': [value: string]
+  'update:year': [value: string | undefined]
+  'update:rating': [value: number | undefined]
+  'update:tag': [value: string | undefined]
+  reset: []
+}>()
+
+const props = defineProps<Props>()
+
+// 年份
+const yearOptions: { label: string; value: string | undefined }[] = [
+  { label: '全部', value: undefined },
+  { label: '2026', value: '2026' },
+  { label: '2025', value: '2025' },
+  { label: '2024', value: '2024' },
+  { label: '2023', value: '2023' },
+  { label: '2022', value: '2022' },
+  { label: '更早', value: 'earlier' },
+]
+
+// 评分
+const ratingOptions: { label: string; value: number | undefined }[] = [
+  { label: '全部', value: undefined },
+  { label: '9.0+', value: 9 },
+  { label: '8.0+', value: 8 },
+  { label: '7.0+', value: 7 },
+  { label: '6.0+', value: 6 },
+]
+
+
+// 关键词输入
+const localKeyword = computed({
+  get:()=> props.keyword,
+  set:(value)=>emit('update:keyword', value)
+})
+</script>
 
 <style scoped>
 .search-form {
