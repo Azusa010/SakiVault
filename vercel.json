@@ -1,7 +1,1 @@
-{
-  "functions": {
-    "api/proxy/[...path].ts": {
-      "maxDuration": 10
-    }
-  }
-}
+{}
