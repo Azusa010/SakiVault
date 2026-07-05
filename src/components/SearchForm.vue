@@ -9,7 +9,6 @@
           d="M15.5 14h-.79l-.28-.27A6.471 6.471 0 0016 9.5 6.5 6.5 0 109.5 16c1.61 0 3.09-.59 4.23-1.57l.27.28v.79l5 4.99L20.49 19l-4.99-5zM9.5 14A4.5 4.5 0 1114 9.5 4.5 4.5 0 019.5 14z"
         />
       </svg>
-      -->
       <input
         v-model="localKeyword"
         type="text"
@@ -79,6 +78,7 @@
 </template>
 
 <script setup lang="ts" name="SearchForm">
+import { ref } from 'vue'
 import { computed } from 'vue'
 
 interface Props {

@@ -1,9 +1,4 @@
 {
   "buildCommand": "npm run build-only",
-  "outputDirectory": "dist",
-  "functions": {
-    "api/proxy/[...path].ts": {
-      "maxDuration": 10
-    }
-  }
+  "outputDirectory": "dist"
 }
