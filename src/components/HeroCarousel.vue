@@ -41,7 +41,7 @@ const props = defineProps<{
 
 const currentIndex = ref(0)
 
-let timeOut: number
+let timeOut: ReturnType<typeof setTimeout>
 
 function next() {
   clearTimeout(timeOut)
@@ -71,7 +71,7 @@ const trackStyle = computed(() => {
   }
 })
 
-let timer: number
+let timer: ReturnType<typeof setInterval>
 startTimer()
 function startTimer() {
   timer = setInterval(() => {
