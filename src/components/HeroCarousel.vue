@@ -90,7 +90,7 @@ onMounted(() => {
 })
 
 const opacity = computed(() => {
-  const fadeDistance = window.innerHeight * 0.9
+  const fadeDistance = window.innerHeight * 0.8
   return Math.max(0, 1 - scrollY.value / fadeDistance)
 })
 </script>

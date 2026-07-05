@@ -174,49 +174,84 @@ export async function getAnimeById(id: number) {
   }
 }
 
-
 // 获得番剧吐槽信息
-export async function getCommentsById(id:number){
-  const response = await bangumiPrivateClient.get(`/subjects/${id}/comments`,
-    {
-      params:{
-        limit:100,
-      }
-    }
-  )
+export async function getCommentsById(id: number) {
+  const response = await bangumiPrivateClient.get(`/subjects/${id}/comments`, {
+    params: {
+      limit: 100,
+    },
+  })
   return response.data
 }
-export async function getReviewsById(id:number){
-  const response = await bangumiPrivateClient.get(`/subjects/${id}/reviews`,
-    {
-      params:{
-        limit:20,
-      }
-    }
-  )
+export async function getReviewsById(id: number) {
+  const response = await bangumiPrivateClient.get(`/subjects/${id}/reviews`, {
+    params: {
+      limit: 20,
+    },
+  })
   return response.data
 }
-
 
 // 获得番剧角色信息
-export async function getCharactersById(id:number){
+export async function getCharactersById(id: number) {
   const response = await bangumiClient.get(`/v0/subjects/${id}/characters`)
   return response
 }
 
 // 获得角色详细信息
-export async function getDetailCharacterById(id:number){
+export async function getDetailCharacterById(id: number) {
   const response = await bangumiClient.get(`/v0/characters/${id}`)
   return response
 }
 
 // 获得Staff信息
-export async function getStaffById(id:number){
- const response = await bangumiPrivateClient.get(`/subjects/${id}/staffs/persons`,{
-  params:{
-    limit:100
-  }
- })
- return response
+export async function getStaffById(id: number) {
+  const response = await bangumiPrivateClient.get(`/subjects/${id}/staffs/persons`, {
+    params: {
+      limit: 100,
+    },
+  })
+  return response
+}
 
+interface SearchSubjectParmas {
+  keyword: string
+  year?: string
+  rating?: number
+  tag?: string
+  limit?: number
+  offset?: number
+}
+
+// 搜索番剧
+export async function searchSubjects(params: SearchSubjectParmas) {
+  const { keyword, year, rating, tag, limit = 20, offset = 0 } = params
+  const filter: Record<string, any> = {
+    type: [2],
+  }
+  if (year) filter.air_date = [`>=${year}-01-01`, `<${Number(year) + 1}-01-01`]
+
+  if (rating !== undefined) filter.rating = [`>=${rating}`]
+
+  if (tag) filter.tag = [tag]
+
+  const response = await bangumiClient.post('/v0/search/subjects', {
+    keyword,
+    filter,
+    sort: 'rank',
+    limit,
+    offset,
+  })
+
+  const items = response.data.data || []
+
+  return items.map((item:any)=>{
+    return {
+      id: item.id,
+      title: item.name_cn || item.name,
+      coverImage: getAnimeImageUrl(item.id, 'large'),
+      averageScore: item.rating?.score,
+      episodes: item.eps,
+    }
+  })
 }
