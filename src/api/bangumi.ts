@@ -28,7 +28,7 @@ const bangumiClient = axios.create({
 const isDev = import.meta.env.DEV
 
 const bangumiPrivateClient = axios.create({
-  baseURL: isDev? 'p1' : '/api/proxy',
+  baseURL: isDev? '/p1' : '/api/proxy',
   headers: {
     Accept: 'application/json',
   }
