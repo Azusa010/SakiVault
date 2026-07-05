@@ -1,4 +1,11 @@
 {
   "buildCommand": "npm run build-only",
-  "outputDirectory": "dist"
+  "outputDirectory": "dist",
+  "framework": null,
+  "rewrites": [
+    {
+      "source": "/api/proxy/(.*)",
+      "destination": "/api/proxy/[...path].ts"
+    }
+  ]
 }
