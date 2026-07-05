@@ -14,8 +14,7 @@
     "lint": "run-s \"lint:*\"",
     "lint:oxlint": "oxlint . --fix",
     "lint:eslint": "eslint . --fix --cache",
-    "format": "prettier --write --experimental-cli src/",
-    "build:vercel": "node vercel-build.js"
+    "format": "prettier --write --experimental-cli src/"
   },
   "dependencies": {
     "@vercel/node": "^5.8.22",
