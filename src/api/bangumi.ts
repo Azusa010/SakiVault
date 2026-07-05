@@ -218,30 +218,35 @@ interface SearchSubjectParmas {
   keyword: string
   year?: string
   rating?: number
-  tag?: string
+  tags?: string[]
   limit?: number
   offset?: number
 }
 
 // 搜索番剧
 export async function searchSubjects(params: SearchSubjectParmas) {
-  const { keyword, year, rating, tag, limit = 20, offset = 0 } = params
+  const { keyword, year, rating, tags, limit = 20, offset = 0 } = params
   const filter: Record<string, any> = {
     type: [2],
   }
-  if (year) filter.air_date = [`>=${year}-01-01`, `<${Number(year) + 1}-01-01`]
+  if (year ==='earlier'){
+    filter.air_date = ['<2022-01-01']
+  }else if (year){
+    filter.air_date = [`>=${year}-01-01`, `<${Number(year) + 1}-01-01`]
+  }else {
+    filter.air_date = ['>=1900-01-01']
+  }
 
   if (rating !== undefined) filter.rating = [`>=${rating}`]
 
-  if (tag) filter.tag = [tag]
+  if (tags && tags.length > 0) filter.tag = tags
 
   const response = await bangumiClient.post('/v0/search/subjects', {
     keyword,
-    filter,
     sort: 'rank',
-    limit,
-    offset,
-  })
+    filter,
+
+  },{params: { limit, offset }})
 
   const items = response.data.data || []
 

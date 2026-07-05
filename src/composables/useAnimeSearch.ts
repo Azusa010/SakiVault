@@ -8,14 +8,14 @@ interface UseAnimeSearchOptions {
   initialKeyword?: string
   initialYear?: string
   initialRating?: number
-  initialTag?: string
+  initialTags?: string[]
 }
 
 export function useAnimeSearch(options: UseAnimeSearchOptions = {}) {
   const keyword = ref(options.initialKeyword ?? '')
   const year = ref<string | undefined>(options.initialYear)
   const rating = ref<number | undefined>(options.initialRating)
-  const tag = ref<string | undefined>(options.initialTag)
+  const tags = ref<string[] | undefined>(options.initialTags ?? [])
 
   const results = ref<Anime[]>([])
   const loading = ref(false)
@@ -27,7 +27,7 @@ export function useAnimeSearch(options: UseAnimeSearchOptions = {}) {
       keyword.value.trim() !== '' ||
       year.value !== undefined ||
       rating.value !== undefined ||
-      tag.value !== undefined
+      tags.value!.length>0
     )
   })
 
@@ -53,11 +53,11 @@ export function useAnimeSearch(options: UseAnimeSearchOptions = {}) {
         keyword: keyword.value,
         year: year.value,
         rating: rating.value,
-        tag: tag.value,
+        tag: tags.value,
         limit: LIMIT,
         offset: offset.value,
       })
-      if(reset) {
+      if (reset) {
         results.value = data
       } else {
         results.value = [...results.value, ...data]
@@ -67,10 +67,11 @@ export function useAnimeSearch(options: UseAnimeSearchOptions = {}) {
       offset.value += data.length
     } catch (err) {
       error.value = '搜索失败,请稍后再试'
-      if(reset){
+      console.error(err);
+      if (reset) {
         results.value = []
       }
-    }finally{
+    } finally {
       loading.value = false
     }
   }
@@ -79,12 +80,12 @@ export function useAnimeSearch(options: UseAnimeSearchOptions = {}) {
   const debouncedSearch = useDebounceFn(() => fetchSearch(true), 300)
 
   // 监听关键字变化，触发搜索
-  watch((keyword),()=>{
+  watch(keyword, () => {
     debouncedSearch()
   })
 
   // 监听过滤条件变化，触发搜索
-  watch([year, rating, tag], () => {
+  watch([year, rating, tags], () => {
     fetchSearch(true)
   })
 
@@ -93,24 +94,30 @@ export function useAnimeSearch(options: UseAnimeSearchOptions = {}) {
     fetchSearch(true)
   }
 
-
-  async function loadMore(){
-    if (loading.value || !hasMore.value) {
-      await fetchSearch(false)
-    }
+  async function loadMore() {
+    if (loading.value || !hasMore.value) return
+    await fetchSearch(false)
   }
 
   function resetFilters() {
+    keyword.value = ''
     year.value = undefined
     rating.value = undefined
-    tag.value = undefined
+    tags.value = []
   }
 
   return {
-    keyword,year,rating,tag,results,loading,error,hasMore,hasActiveFilter,
+    keyword,
+    year,
+    rating,
+    tags,
+    results,
+    loading,
+    error,
+    hasMore,
+    hasActiveFilter,
     search: () => fetchSearch(true),
     loadMore,
     resetFilters,
   }
-
 }

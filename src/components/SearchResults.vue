@@ -3,7 +3,7 @@
     <!-- 错误 -->
     <div v-if="error" class="state-message error">
       <p>{{ error }}</p>
-      <button class="retry-btn" @click="()=>{ $emit('retry') }">重新加载</button>
+      <button class="retry-btn" @click="handleRetry">重新加载</button>
     </div>
     <!-- 首次加载 -->
     <div v-else-if="loading && results.length === 0" class="state-message">
@@ -28,7 +28,7 @@
       </div>
       <!-- 加载更多 -->
        <div v-if="hasMore" class="load-more">
-        <button @click="$emit('load-more')" class="load-more-btn" :disabled="loading" >
+        <button @click="handleLoadMore" class="load-more-btn" :disabled="loading" >
           {{ loading ? '加载中...' : '加载更多' }}
         </button>
        </div>
@@ -54,6 +54,14 @@ const emit = defineEmits<{
   'load-more': []
   'retry': []
 }>()
+
+const handleLoadMore = () => {
+  emit('load-more')
+}
+
+const handleRetry = () => {
+  emit('retry')
+}
 </script>
 
 <style scoped>

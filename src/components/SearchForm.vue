@@ -64,8 +64,8 @@
             @keydown.enter="addTag"
           />
           <!-- 已添加的标签，显示为可删除的小块 -->
-          <span v-if="tag" class="tag-chip">
-            {{ tag }}
+          <span  class="tag-chip" v-for="t in tags" :key="t" @click="removeTag(t)">
+            {{ t }}
             <button type="button" class="tag-remove" @click="clearTag">×</button>
           </span>
         </div>
@@ -85,14 +85,14 @@ interface Props {
   keyword: string
   year?: string
   rating?: number
-  tag?: string
+  tags?: string[]
 }
 
 const emit = defineEmits<{
   'update:keyword': [value: string]
   'update:year': [value: string | undefined]
   'update:rating': [value: number | undefined]
-  'update:tag': [value: string | undefined]
+  'update:tags': [value: string[] | undefined]
   reset: []
 }>()
 
@@ -124,7 +124,6 @@ const localKeyword = computed({
   set: (value) => emit('update:keyword', value),
 })
 
-const tagInput = ref('')
 
 function selectYear(value: string | undefined) {
   emit('update:year', value)
@@ -133,17 +132,26 @@ function selectYear(value: string | undefined) {
 function selectRating(value: number | undefined) {
   emit('update:rating', value)
 }
+const tagInput = ref('')
 
 function addTag() {
   const value = tagInput.value.trim()
-  if (value) {
-    emit('update:tag', value)
-    tagInput.value = ''
+  if(!value) return
+
+  const current = props.tags || []
+  if(!current.includes(value)) {
+    emit('update:tags', [...current, value])
   }
+  tagInput.value = ''
+}
+
+function removeTag(value: string) {
+  const current = props.tags || []
+  emit('update:tags', current.filter((t) => t !== value))
 }
 
 function clearTag() {
-  emit('update:tag', undefined)
+  emit('update:tags', undefined)
 }
 
 function handleEnter() {}
