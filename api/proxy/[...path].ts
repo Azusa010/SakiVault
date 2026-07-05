@@ -1,13 +1,10 @@
-import type { NextRequest } from 'next/server'
-
 export const config = {
   runtime: 'edge',
 }
 
-export default async function handler(req: NextRequest) {
+export default async function handler(req: Request) {
   const url = new URL(req.url)
-  const pathSegments = url.pathname.replace('/api/proxy/', '').split('/')
-  const targetPath = pathSegments.join('/')
+  const targetPath = url.pathname.replace('/api/proxy/', '')
   const targetUrl = `https://next.bgm.tv/p1/${targetPath}${url.search}`
 
   try {
