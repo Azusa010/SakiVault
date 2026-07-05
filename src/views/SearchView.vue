@@ -1,11 +1,12 @@
 <template>
   <div class="search-view w">
-   111111111
+    <SearchForm />
   </div>
 </template>
 
 <script setup lang="ts" name="SearchView">
 import { useRoute } from 'vue-router'
+import SearchForm from '@/components/SearchForm.vue';
 const route = useRoute()
 
 

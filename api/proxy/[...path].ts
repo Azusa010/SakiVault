@@ -9,11 +9,14 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
 
   const targetUrl = `https://next.bgm.tv/p1/${targetPath}${queryString}`
 
+  const token = process.env.BGM_ACCESS_TOKEN
+
   try {
     const response = await fetch(targetUrl, {
       method: req.method,
       headers: {
         Accept: 'application/json',
+        ...(token ? { Authorization: `Bearer ${token}` } : {}),
       },
     })
 
