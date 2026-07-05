@@ -17,6 +17,7 @@
     "format": "prettier --write --experimental-cli src/"
   },
   "dependencies": {
+    "@vercel/node": "^5.8.22",
     "@vueuse/core": "^14.3.0",
     "axios": "^1.18.1",
     "https-proxy-agent": "^9.1.0",
