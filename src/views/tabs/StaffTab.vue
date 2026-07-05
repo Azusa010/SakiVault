@@ -73,7 +73,7 @@ const groupedStaff = computed(() => {
   text-align: center;
 }
 .credits-roll {
-  animation: credits-scroll 35s linear infinite;
+  animation: credits-scroll 42s linear infinite;
   text-align: center;
 }
 

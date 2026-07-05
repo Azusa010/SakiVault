@@ -2,12 +2,15 @@
   <div class="home-view">
     <!-- Hero轮播图 -->
     <HeroCarousel :items="currentSeasonAnime.slice(0, 5)" />
-    <div class="hero-spacer" style="position: relative; width: 1px; height: 100vh; pointer-events: none;"></div>
+    <div
+      class="hero-spacer"
+      style="position: relative; width: 1px; height: 100vh; pointer-events: none"
+    ></div>
     <!-- Hero区域 -->
     <section class="hero">
       <div class="hero-content">
         <h1 class="hero-title">SakiVault</h1>
-        <p class="hero-subtitle">  </p>
+        <p class="hero-subtitle"></p>
         <!-- 搜索栏 -->
         <section class="search-section">
           <div class="search-box">
@@ -18,8 +21,13 @@
               @keyup.enter="handleSearch"
             />
             <div class="btn-container">
-              <a @click="handleSearch" class="search-btn">搜索
-                <span v-for="s in 40" :key="s" :style="{top: s * 1.375 + 'px',transitionDelay: Math.random() * 0.5 + 's'}"></span>
+              <a @click="handleSearch" class="search-btn"
+                >搜索
+                <span
+                  v-for="s in 40"
+                  :key="s"
+                  :style="{ top: s * 1.375 + 'px', transitionDelay: Math.random() * 0.5 + 's' }"
+                ></span>
               </a>
             </div>
           </div>
@@ -52,9 +60,9 @@
 
 <script setup lang="ts" name="HomeView">
 import HeroCarousel from '@/components/HeroCarousel.vue'
-import { ref, onMounted} from 'vue'
+import { ref, onMounted } from 'vue'
 import { type Anime } from '@/types/anime'
-import { getCurrentSeasonAnime, getPopularAnime,getRecentPopularAnime } from '@/api/bangumi'
+import { getCurrentSeasonAnime, getPopularAnime, getRecentPopularAnime } from '@/api/bangumi'
 import { useRouter } from 'vue-router'
 import AnimeCard from '@/components/AnimeCard.vue'
 import SkeletonCard from '@/components/SkeletonCard.vue'
@@ -99,13 +107,24 @@ onMounted(async () => {
 
 <style scoped>
 .hero {
+  position: relative;
   min-height: 420px;
   display: flex;
   align-items: center;
   justify-content: center;
   text-align: center;
   padding: var(--space-xl) var(--space-md);
-  background: radial-gradient(circle at 50% 50%, rgba(52, 109, 186, 0.15), transparent 60%);
+  background: radial-gradient(circle at 50% 50%, rgba(52, 109, 186, 0.15), transparent 60%);;
+}
+
+.hero::after{
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: url('https://anime.bang-dream.com/mygo/wordpress/wp-content/uploads/2023/08/31171520/%E5%8D%83%E6%97%A9%E6%84%9B%E9%9F%B3_%E3%81%B2%E3%81%92%E7%8C%AB.png')
+  no-repeat center center/cover;
+  filter: blur(9px) brightness(0.4);
+  z-index: -1;
 }
 
 .hero-title {
@@ -172,7 +191,6 @@ onMounted(async () => {
   transform: scale(0);
   transform-origin: right;
   transition: transform 0.3s ease-in-out;
-
 }
 
 .search-btn:hover span {
@@ -194,9 +212,6 @@ onMounted(async () => {
 .search-box input:focus {
   outline: 2px solid var(--color-primary);
 }
-
-
-
 
 .section {
   padding: var(--space-xl) var(--space-md);
