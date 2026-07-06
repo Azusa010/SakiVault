@@ -45,11 +45,17 @@
         </button>
         <Transition name="dropdown">
           <div class="dropdown-menu" v-if="isDropdownOpen">
-          <div class="dropdown-item" v-for="(v,index) in statusList" :key="v.label" @click="selectSatus(v)" :style="{'--index':index}">
-            <span :class="`iconfont ${v.icon}`"></span>
-            {{ v.label }}
+            <div
+              class="dropdown-item"
+              v-for="(v, index) in STATUS_OPTIONS"
+              :key="v.value"
+              @click="selectStatus(v)"
+              :style="{ '--index': index }"
+            >
+              <span :class="`iconfont ${v.icon}`"></span>
+              {{ v.label }}
+            </div>
           </div>
-        </div>
         </Transition>
       </div>
     </div>
@@ -82,6 +88,8 @@ import '@/assets/font_ftpgxlinezk/iconfont.css'
 import StarRating from '@/components/StarRating.vue'
 import RatingChart from '@/components/RatingChar.vue'
 import '@/assets/styles/DetailView.css'
+import { useFavorites, STATUS_LABELS, STATUS_OPTIONS } from '@/composables/useFavorites'
+import type { CollectionStatus } from '@/types/favorite'
 
 const route = useRoute()
 const id = Number(route.params.id)
@@ -116,29 +124,36 @@ onMounted(async () => {
   for (const key in ratingCount) {
     count.value += ratingCount[key] ?? 0
   }
+  // 同步收藏状态
+  const savedStatus = getStatus(id)
+  followStatus.value = STATUS_LABELS[savedStatus ?? 0] || '未追'
   nextTick(updateIndicator)
+
 })
 
+
 // 追番按钮
-const isDropdownOpen = ref(false)
 const followStatus = ref('未追')
+const isDropdownOpen = ref(false)
 
-const statusList = [
-  { label: '未追', icon: 'icon-a-shoucang_quxiaoshoucang' },
-  { label: '在看', icon: 'icon-bofang' },
-  { label: '想看', icon: 'icon-shoucang' },
-  { label: '搁置', icon: 'icon-gezhi' },
-  { label: '看过', icon: 'icon-wancheng' },
-  { label: '抛弃', icon: 'icon-paoqi' },
-]
-
-function selectSatus(params: { label: string }) {
+function selectStatus(params:{value: number, label: string}) {
   followStatus.value = params.label
   isDropdownOpen.value = false
+
+  if(anime.value){
+    setFavoriteStatus(id,params.value as CollectionStatus, {
+      id: anime.value.id,
+      title: anime.value.title,
+      coverImage: anime.value.coverImage,
+    })
+  }
 }
 
+const { getStatus, setFavoriteStatus } = useFavorites()
+
+
 const currentIcon = computed(() => {
-  const currentStatus = statusList.find((v) => v.label === followStatus.value)
+  const currentStatus = STATUS_OPTIONS.find((v) => v.label === followStatus.value)
   return currentStatus ? currentStatus.icon : ''
 })
 

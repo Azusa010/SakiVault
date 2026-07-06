@@ -257,6 +257,7 @@
 }
 
 .dropdown-item {
+  z-index: 10;
   color: var(--color-primary);
   position: relative;
   overflow: hidden;
@@ -315,11 +316,12 @@
 
 
 .tab-nav {
+  margin: 50px auto 0 auto;
+  width: 50%;
   position: relative;
   display: flex;
   justify-content: center;
   gap: 40px;
-  margin-top: 40px;
   border-bottom: 1px solid rgba(255, 255, 255, 0.1);
   padding-bottom: 16px;
 }

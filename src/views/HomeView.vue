@@ -26,7 +26,10 @@
                 <span
                   v-for="s in 40"
                   :key="s"
-                  :style="{ top: s * 1.375 + 'px', transitionDelay: Math.random() * 0.5 + 's' }"
+                  :style="{
+                    top: s * 1.375 + 'px',
+                    transitionDelay: Math.random() * 0.25 + 's',
+                  }"
                 ></span>
               </a>
             </div>
@@ -114,20 +117,22 @@ onMounted(async () => {
   justify-content: center;
   text-align: center;
   padding: var(--space-xl) var(--space-md);
-  background: radial-gradient(circle at 50% 50%, rgba(52, 109, 186, 0.15), transparent 60%);;
+  background: radial-gradient(circle at 50% 50%, rgba(52, 109, 186, 0.15), transparent 60%);
 }
 
-.hero::after{
+.hero::after {
   content: '';
   position: absolute;
   inset: 0;
   background: url('https://anime.bang-dream.com/mygo/wordpress/wp-content/uploads/2023/08/31171520/%E5%8D%83%E6%97%A9%E6%84%9B%E9%9F%B3_%E3%81%B2%E3%81%92%E7%8C%AB.png')
-  no-repeat center center/cover;
+    no-repeat center center/cover;
   filter: blur(9px) brightness(0.4);
   z-index: -1;
 }
 
 .hero-title {
+  font-family: serif, cursive, 'Lucida Calligraphy', 'Brush Script MT';
+  font-style: italic;
   font-size: clamp(2.5rem, 6vw, 4.5rem);
   font-weight: 800;
   color: var(--color-primary);
@@ -169,10 +174,12 @@ onMounted(async () => {
   justify-content: center;
   align-items: center;
   cursor: pointer;
+  border-radius: var(--radius-md);
+  overflow: hidden;
   background-color: rgba(25, 33, 50, 0.1);
   font-size: 1.2rem;
   font-weight: normal;
-  transition: 0.2s;
+  transition: all 0.2s;
   transition-delay: 0.2s;
 }
 
@@ -188,13 +195,13 @@ onMounted(async () => {
   height: 1.375px;
   background-color: #00ffcc;
   z-index: -1;
-  transform: scale(0);
+  transform: scaleX(0);
   transform-origin: right;
   transition: transform 0.3s ease-in-out;
 }
 
 .search-btn:hover span {
-  transform: scale(1);
+  transform: scaleX(1);
   transform-origin: left;
 }
 

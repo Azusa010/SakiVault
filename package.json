@@ -16,7 +16,6 @@
     "lint:eslint": "eslint . --fix --cache",
     "format": "prettier --write --experimental-cli src/",
     "build:vercel": "npm run build-only"
-
   },
   "dependencies": {
     "@vercel/node": "^5.8.22",

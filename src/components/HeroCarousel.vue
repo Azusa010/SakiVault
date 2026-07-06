@@ -1,7 +1,21 @@
 <template>
-  <div class="hero-carousel" :class="{'is-disabled':isDisabled}" ref="hero-carousel" :style="{ opacity: opacity ,transform: `scale(${1 + (1 - opacity) * 0.05})`, transition: 'opacity 0.15s ease-in-out' }" v-if="opacity!=0">
+  <div
+    class="hero-carousel"
+    :class="{ 'is-disabled': isDisabled }"
+    ref="hero-carousel"
+    :style="{
+      opacity: opacity,
+      transform: `scale(${1 + (1 - opacity) * 0.05})`,
+    }"
+    v-show="opacity > 0"
+  >
     <div class="images" :style="trackStyle">
-      <RouterLink class="slide" v-for="item in props.items" :key="item.id" :to="`/anime/${item.id}`">
+      <RouterLink
+        class="slide"
+        v-for="item in props.items"
+        :key="item.id"
+        :to="`/anime/${item.id}`"
+      >
         <img :src="item.coverImage" :alt="item.title" />
         <div class="slide-info">
           <h3>{{ item.title }}</h3>
@@ -9,12 +23,12 @@
       </RouterLink>
     </div>
     <Transition name="fly-left">
-      <button class="arrow arrow-left" @click="prev" v-if="scrollY===0">
-      <span class="iconfont icon-youjiantou"></span>
-    </button>
+      <button class="arrow arrow-left" @click="prev" v-if="scrollY === 0">
+        <span class="iconfont icon-youjiantou"></span>
+      </button>
     </Transition>
     <Transition name="fly-right">
-      <button class="arrow arrow-right" @click="next" v-if="scrollY===0">
+      <button class="arrow arrow-right" @click="next" v-if="scrollY === 0">
         <span class="iconfont icon-zuojiantou"></span>
       </button>
     </Transition>
@@ -31,7 +45,7 @@
 
 <script setup lang="ts">
 import { type Anime } from '@/types/anime'
-import { computed, ref, onUnmounted ,onMounted, watch } from 'vue'
+import { computed, ref, onUnmounted, onMounted, watch } from 'vue'
 import '@/assets/font_ftpgxlinezk/iconfont.css'
 
 onUnmounted(() => {
@@ -85,7 +99,7 @@ function startTimer() {
 
 const scrollY = ref(0)
 
-function updateOpacity(){
+function updateOpacity() {
   scrollY.value = window.scrollY
 }
 
@@ -100,7 +114,7 @@ const opacity = computed(() => {
 
 const isDisabled = ref(false)
 
-watch(scrollY,()=>{
+watch(scrollY, () => {
   isDisabled.value = scrollY.value !== 0
 })
 </script>
@@ -112,7 +126,7 @@ watch(scrollY,()=>{
 
 .hero-carousel {
   position: fixed;
-  inset:0;
+  inset: 0;
   width: 100%;
   height: 100vh;
   overflow: hidden;
@@ -212,7 +226,6 @@ watch(scrollY,()=>{
   transition: all 0.45s cubic-bezier(0.16, 1, 0.3, 1);
 }
 
-
 .fly-left-enter-from,
 .fly-left-leave-to {
   opacity: 0;
@@ -225,10 +238,8 @@ watch(scrollY,()=>{
   transform: translateY(-50%) translateX(100px) scale(0.8);
 }
 
-
 .fly-left-leave-active,
 .fly-right-leave-active {
   pointer-events: none;
 }
-
 </style>
