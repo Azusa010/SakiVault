@@ -35,7 +35,6 @@ watch(
     try {
       const res = await getReviewsById(id)
       comments.value = res.data || []
-      console.log(comments.value)
     } catch (e) {
       error.value = '加载失败'
       console.log(e)

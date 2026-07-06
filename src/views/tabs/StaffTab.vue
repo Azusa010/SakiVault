@@ -32,7 +32,6 @@ watch(
     try {
       const res = await getStaffById(id)
       staff.value = res.data.data || []
-      console.log(staff.value)
     } catch (e) {
       console.error(e)
     }
