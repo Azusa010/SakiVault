@@ -1,5 +1,5 @@
 <template>
-  <div class="staff-tab" style="margin-top: 60px;">
+  <div class="staff-tab" style="margin-top: 60px">
     <div class="credits-roll">
       <div v-for="n in 2" :key="'copy-' + n" class="credits-copy">
         <div v-for="group in groupedStaff" :key="n + '-' + group.relation" class="credits-group">
@@ -9,7 +9,7 @@
               v-for="(person, index) in group.persons"
               :key="n + '-' + group.relation + '-' + index"
             >
-              {{ person.staff.nameCN||person.staff.name }}
+              {{ person.staff.nameCN || person.staff.name }}
             </span>
           </div>
         </div>

@@ -5,12 +5,11 @@ import type { CollectionStatus, FavoriteAnimeSnapshot, FavoriteItem } from '@/ty
 export const STATUS_LABELS: Readonly<Record<CollectionStatus, string>> = {
   0: '未追',
   1: '想看',
-  2: '在看',
-  3: '已看',
+  2: '看过',
+  3: '在看',
   4: '搁置',
   5: '抛弃',
 }
-
 
 // 下拉菜单选项
 export const STATUS_OPTIONS: Readonly<{ value: CollectionStatus; label: string; icon: string }[]> =
@@ -74,6 +73,6 @@ export function useFavorites() {
     setFavoriteStatus,
     removeFavorite,
     STATUS_LABELS,
-    STATUS_OPTIONS
+    STATUS_OPTIONS,
   }
 }

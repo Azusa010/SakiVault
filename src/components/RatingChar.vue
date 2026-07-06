@@ -4,11 +4,11 @@
       <span class="score-label">{{ item.label }}</span>
       <div class="bar-wrapper">
         <div
-        class="bar"
-        :style="{ width: item.percentage + '%' }"
-        @mouseenter="showTooltip(item,$event)"
-        @mousemove="moveTooltip"
-        @mouseleave="hideTooltip"
+          class="bar"
+          :style="{ width: item.percentage + '%' }"
+          @mouseenter="showTooltip(item, $event)"
+          @mousemove="moveTooltip"
+          @mouseleave="hideTooltip"
         ></div>
       </div>
     </div>
@@ -23,30 +23,30 @@
 </template>
 
 <script setup lang="ts" name="RatingChart">
-import { computed,ref } from 'vue';
+import { computed, ref } from 'vue'
 
 const props = defineProps<{
   rating: { count: Record<string, number> } | undefined
 }>()
 
-const chartData = computed(()=>{
-  const list:Array<{ label: string; value: number; percentage?: number ; ratio?:number}> = []
+const chartData = computed(() => {
+  const list: Array<{ label: string; value: number; percentage?: number; ratio?: number }> = []
   let max = 0
   let total = 0
   for (let key in props.rating?.count) {
     const num = props.rating?.count[key] ?? 0
     total += num
-    if(num > max) max = num
+    if (num > max) max = num
     list.push({
       label: key,
-      value: num
+      value: num,
     })
   }
-  return list.map((item)=>{
+  return list.map((item) => {
     return {
       ...item,
       percentage: max > 0 ? (item.value / max) * 100 : 0,
-      ratio: total > 0 ? (item.value / total) : 0
+      ratio: total > 0 ? item.value / total : 0,
     }
   })
 })
@@ -60,15 +60,15 @@ const tooltip = ref<{
   visible: false,
   text: '',
   x: 0,
-  y: 0
+  y: 0,
 })
 
-function showTooltip(item:any,event:MouseEvent){
-  tooltip.value={
+function showTooltip(item: any, event: MouseEvent) {
+  tooltip.value = {
     visible: true,
-    text: ` ${item.label}⭐  ${(item.ratio*100).toFixed(2)}%  (${item.value}人)`,
+    text: ` ${item.label}⭐  ${(item.ratio * 100).toFixed(2)}%  (${item.value}人)`,
     x: event.clientX,
-    y: event.clientY
+    y: event.clientY,
   }
 }
 
@@ -83,7 +83,6 @@ function hideTooltip() {
 </script>
 
 <style scoped>
-
 .rating-chart {
   width: 100%;
   max-width: 400px;
@@ -136,6 +135,4 @@ function hideTooltip() {
   z-index: 100;
   transform: translateX(-50%);
 }
-
-
 </style>

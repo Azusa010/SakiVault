@@ -27,7 +27,7 @@ export function useAnimeSearch(options: UseAnimeSearchOptions = {}) {
       keyword.value.trim() !== '' ||
       year.value !== undefined ||
       rating.value !== undefined ||
-      tags.value!.length>0
+      tags.value!.length > 0
     )
   })
 
@@ -67,7 +67,7 @@ export function useAnimeSearch(options: UseAnimeSearchOptions = {}) {
       offset.value += data.length
     } catch (err) {
       error.value = '搜索失败,请稍后再试'
-      console.error(err);
+      console.error(err)
       if (reset) {
         results.value = []
       }

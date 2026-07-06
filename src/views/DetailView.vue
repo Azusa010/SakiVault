@@ -128,20 +128,18 @@ onMounted(async () => {
   const savedStatus = getStatus(id)
   followStatus.value = STATUS_LABELS[savedStatus ?? 0] || '未追'
   nextTick(updateIndicator)
-
 })
-
 
 // 追番按钮
 const followStatus = ref('未追')
 const isDropdownOpen = ref(false)
 
-function selectStatus(params:{value: number, label: string}) {
+function selectStatus(params: { value: number; label: string }) {
   followStatus.value = params.label
   isDropdownOpen.value = false
 
-  if(anime.value){
-    setFavoriteStatus(id,params.value as CollectionStatus, {
+  if (anime.value) {
+    setFavoriteStatus(id, params.value as CollectionStatus, {
       id: anime.value.id,
       title: anime.value.title,
       coverImage: anime.value.coverImage,
@@ -150,7 +148,6 @@ function selectStatus(params:{value: number, label: string}) {
 }
 
 const { getStatus, setFavoriteStatus } = useFavorites()
-
 
 const currentIcon = computed(() => {
   const currentStatus = STATUS_OPTIONS.find((v) => v.label === followStatus.value)

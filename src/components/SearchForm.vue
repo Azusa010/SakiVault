@@ -64,7 +64,7 @@
             @keydown.enter="addTag"
           />
           <!-- 已添加的标签，显示为可删除的小块 -->
-          <span  class="tag-chip" v-for="t in tags" :key="t" @click="removeTag(t)">
+          <span class="tag-chip" v-for="t in tags" :key="t" @click="removeTag(t)">
             {{ t }}
             <button type="button" class="tag-remove" @click="clearTag">×</button>
           </span>
@@ -124,7 +124,6 @@ const localKeyword = computed({
   set: (value) => emit('update:keyword', value),
 })
 
-
 function selectYear(value: string | undefined) {
   emit('update:year', value)
 }
@@ -136,10 +135,10 @@ const tagInput = ref('')
 
 function addTag() {
   const value = tagInput.value.trim()
-  if(!value) return
+  if (!value) return
 
   const current = props.tags || []
-  if(!current.includes(value)) {
+  if (!current.includes(value)) {
     emit('update:tags', [...current, value])
   }
   tagInput.value = ''
@@ -147,7 +146,10 @@ function addTag() {
 
 function removeTag(value: string) {
   const current = props.tags || []
-  emit('update:tags', current.filter((t) => t !== value))
+  emit(
+    'update:tags',
+    current.filter((t) => t !== value),
+  )
 }
 
 function clearTag() {

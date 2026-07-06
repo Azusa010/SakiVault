@@ -229,11 +229,11 @@ export async function searchSubjects(params: SearchSubjectParmas) {
   const filter: Record<string, any> = {
     type: [2],
   }
-  if (year ==='earlier'){
+  if (year === 'earlier') {
     filter.air_date = ['<2022-01-01']
-  }else if (year){
+  } else if (year) {
     filter.air_date = [`>=${year}-01-01`, `<${Number(year) + 1}-01-01`]
-  }else {
+  } else {
     filter.air_date = ['>=1900-01-01']
   }
 
@@ -241,16 +241,19 @@ export async function searchSubjects(params: SearchSubjectParmas) {
 
   if (tags && tags.length > 0) filter.tag = tags
 
-  const response = await bangumiClient.post('/v0/search/subjects', {
-    keyword,
-    sort: 'rank',
-    filter,
-
-  },{params: { limit, offset }})
+  const response = await bangumiClient.post(
+    '/v0/search/subjects',
+    {
+      keyword,
+      sort: 'rank',
+      filter,
+    },
+    { params: { limit, offset } },
+  )
 
   const items = response.data.data || []
 
-  return items.map((item:any)=>{
+  return items.map((item: any) => {
     return {
       id: item.id,
       title: item.name_cn || item.name,

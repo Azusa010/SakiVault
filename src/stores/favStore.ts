@@ -1,6 +1,6 @@
-import { defineStore } from "pinia";
-import {ref} from "vue";
-import type { CollectionStatus,FavoriteAnimeSnapshot,FavoriteItem } from "@/types/favorite";
+import { defineStore } from 'pinia'
+import { ref } from 'vue'
+import type { CollectionStatus, FavoriteAnimeSnapshot, FavoriteItem } from '@/types/favorite'
 
 const STORAGE_KEY = 'saki-favorites'
 
@@ -10,11 +10,11 @@ export const useFavStore = defineStore('favStore', () => {
   function loadFromStorage() {
     try {
       const raw = localStorage.getItem(STORAGE_KEY)
-      if(raw){
+      if (raw) {
         items.value = JSON.parse(raw)
       }
     } catch (error) {
-      console.error('Failed to load favorites from LocalStorage',error);
+      console.error('Failed to load favorites from LocalStorage', error)
       items.value = {}
     }
   }
@@ -23,35 +23,35 @@ export const useFavStore = defineStore('favStore', () => {
     try {
       localStorage.setItem(STORAGE_KEY, JSON.stringify(items.value))
     } catch (error) {
-      console.error('Failed to write favorites to LocalStorage',error);
+      console.error('Failed to write favorites to LocalStorage', error)
     }
   }
 
-  function setStatus(id:number,status: CollectionStatus, anime:FavoriteAnimeSnapshot) {
-    if(status === 0){
+  function setStatus(id: number, status: CollectionStatus, anime: FavoriteAnimeSnapshot) {
+    if (status === 0) {
       remove(id)
       return
     }
 
     items.value = {
       ...items.value,
-      [id]:{
+      [id]: {
         id,
         status,
         anime,
         updatedAt: Date.now(),
-      }
+      },
     }
     saveToStorage()
   }
 
-  function remove(id:number) {
-    const {[id]:_, ...rest} = items.value
+  function remove(id: number) {
+    const { [id]: _, ...rest } = items.value
     items.value = rest
     saveToStorage()
   }
 
-  function getById(id:number): FavoriteItem | undefined {
+  function getById(id: number): FavoriteItem | undefined {
     return items.value[id]
   }
 

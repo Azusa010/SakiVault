@@ -40,8 +40,6 @@
 <script setup lang="ts" name="StarRating">
 const props = defineProps(['score'])
 const percentage = `${Math.min(100, Math.max(0, props.score * 10))}%`
-
-
 </script>
 <style scoped>
 .star-rating {
@@ -51,7 +49,6 @@ const percentage = `${Math.min(100, Math.max(0, props.score * 10))}%`
   font-size: 20px;
   letter-spacing: 2px;
 }
-
 
 .stars-empty {
   display: inline-block;

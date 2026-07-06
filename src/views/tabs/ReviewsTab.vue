@@ -3,9 +3,13 @@
     <div v-if="loading" class="loading">加载中...</div>
     <div v-else-if="error" class="error">{{ error }}</div>
     <template v-else>
-      <ReviewCard v-for="c in comments" :key="c.id" :comment="c" class="comment-card"/>
+      <ReviewCard v-for="c in comments" :key="c.id" :comment="c" class="comment-card" />
       <div v-if="!comments.length" class="empty">暂无评论</div>
-      <br><br><hr style="filter: brightness(0.5);"><br><h3 style="color: #aaa; text-align: center;">到底了</h3><br>
+      <br /><br />
+      <hr style="filter: brightness(0.5)" />
+      <br />
+      <h3 style="color: #aaa; text-align: center">到底了</h3>
+      <br />
     </template>
   </div>
 </template>
@@ -13,7 +17,7 @@
 <script setup lang="ts" name="">
 import { getReviewsById } from '@/api/bangumi'
 import { ref, watch } from 'vue'
-import ReviewCard from '@/components/ReviewCard.vue';
+import ReviewCard from '@/components/ReviewCard.vue'
 import { type Comment } from '@/types/anime'
 
 const props = defineProps<{ anime: { id: number } }>()
@@ -31,8 +35,7 @@ watch(
     try {
       const res = await getReviewsById(id)
       comments.value = res.data || []
-      console.log(comments.value);
-
+      console.log(comments.value)
     } catch (e) {
       error.value = '加载失败'
       console.log(e)

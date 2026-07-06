@@ -21,8 +21,8 @@
 </template>
 
 <script setup lang="ts" name="SearchView">
-import { watch, onMounted } from 'vue'
-import { useRoute, useRouter, } from 'vue-router'
+import { watch } from 'vue'
+import { useRoute, useRouter } from 'vue-router'
 import SearchForm from '@/components/SearchForm.vue'
 import SearchResults from '@/components/SearchResults.vue'
 import { useAnimeSearch } from '@/composables/useAnimeSearch'
@@ -79,8 +79,6 @@ watch([keyword, year, rating, tags], () => {
 function handleLoadMore() {
   loadMore()
 }
-
-
 </script>
 
 <style scoped></style>

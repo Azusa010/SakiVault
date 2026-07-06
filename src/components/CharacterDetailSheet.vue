@@ -104,7 +104,7 @@ const visibleInfobox = computed(() => {
   )
 })
 
-function formatValue(value: string | string[] | Array<{ k:string,v: string } | string>) {
+function formatValue(value: string | string[] | Array<{ k: string; v: string } | string>) {
   if (!Array.isArray(value)) return String(value)
 
   return value
@@ -113,7 +113,7 @@ function formatValue(value: string | string[] | Array<{ k:string,v: string } | s
       if (item && typeof item === 'object') return `${item.k}: ${item.v}`
       return String(item)
     })
-    .join(' / ' )
+    .join(' / ')
 }
 </script>
 

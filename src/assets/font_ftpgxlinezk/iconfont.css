@@ -1,10 +1,10 @@
 @font-face {
-  font-family: "iconfont"; /* Project id  */
+  font-family: 'iconfont'; /* Project id  */
   src: url('iconfont.ttf?t=1783079798080') format('truetype');
 }
 
 .iconfont {
-  font-family: "iconfont" !important;
+  font-family: 'iconfont' !important;
   font-size: 16px;
   font-style: normal;
   -webkit-font-smoothing: antialiased;
@@ -12,50 +12,49 @@
 }
 
 .icon-bofang:before {
-  content: "\e613";
+  content: '\e613';
 }
 
 .icon-gezhi:before {
-  content: "\e6c9";
+  content: '\e6c9';
 }
 
 .icon-wancheng:before {
-  content: "\e64b";
+  content: '\e64b';
 }
 
 .icon-youjiantou:before {
-  content: "\e620";
+  content: '\e620';
 }
 
 .icon-zuojiantou:before {
-  content: "\e621";
+  content: '\e621';
 }
 
 .icon-shoucang:before {
-  content: "\e8b9";
+  content: '\e8b9';
 }
 
 .icon-paoqi:before {
-  content: "\e6ca";
+  content: '\e6ca';
 }
 
 .icon-rili:before {
-  content: "\e614";
+  content: '\e614';
 }
 
 .icon-a-shoucangyishoucang:before {
-  content: "\e659";
+  content: '\e659';
 }
 
 .icon-a-shoucang_quxiaoshoucang:before {
-  content: "\e671";
+  content: '\e671';
 }
 
 .icon-Filled_Star:before {
-  content: "\e548";
+  content: '\e548';
 }
 
 .icon-shoucang-yishoucang:before {
-  content: "\e50b";
+  content: '\e50b';
 }
-

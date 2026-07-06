@@ -11,20 +11,20 @@
   --surface-hover: #26334d;
 
   /* 文字颜色阶梯 */
-  --text-main: #f0f3f8;      /* 纯净高亮白，用于标题 */
-  --text-muted: #9fadbd;     /* 经典 AniList 灰蓝，用于正文和次要信息 */
-  --text-disabled: #5c6b84;  /* 弱化文字，用于元数据、时间戳、占位符 */
+  --text-main: #f0f3f8; /* 纯净高亮白，用于标题 */
+  --text-muted: #9fadbd; /* 经典 AniList 灰蓝，用于正文和次要信息 */
+  --text-disabled: #5c6b84; /* 弱化文字，用于元数据、时间戳、占位符 */
 
   /* 核心强调色 (AniList 气质：电光青/初音绿) */
   --color-primary: #00ffcc;
   --color-primary-hover: #33ffdd;
   --color-primary-alpha: rgba(0, 255, 204, 0.15);
-  --color-accent: #9256ff;   /* 辅助强调紫，用于特定标签或高亮 */
+  --color-accent: #9256ff; /* 辅助强调紫，用于特定标签或高亮 */
 
   /* --- 边框与阴影 (Borders & Shadows) --- */
   --radius-sm: 4px;
-  --radius-md: 8px;          /* 卡片主流圆角 */
-  --radius-lg: 14px;         /* 大弹窗或外层容器 */
+  --radius-md: 8px; /* 卡片主流圆角 */
+  --radius-lg: 14px; /* 大弹窗或外层容器 */
   --radius-full: 9999px;
 
   --shadow-sm: 0 2px 8px rgba(0, 0, 0, 0.2);
@@ -60,7 +60,15 @@ html {
 }
 body {
   /* 字体族：优先现代无衬线字体，兼顾系统原生清晰度 */
-  font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+  font-family:
+    'Inter',
+    -apple-system,
+    BlinkMacSystemFont,
+    'Segoe UI',
+    Roboto,
+    Helvetica,
+    Arial,
+    sans-serif;
   font-weight: 450;
   line-height: 1.5;
   font-size: 1rem;
@@ -77,7 +85,12 @@ body {
   overflow-x: hidden;
 }
 
-h1, h2, h3, h4, h5, h6 {
+h1,
+h2,
+h3,
+h4,
+h5,
+h6 {
   color: var(--text-main);
   font-weight: 700;
   line-height: 1.2;

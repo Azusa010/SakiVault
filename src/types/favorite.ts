@@ -1,4 +1,3 @@
-
 import { type Anime } from '@/types/anime'
 
 /**
@@ -16,11 +15,8 @@ export type CollectionStatus = 0 | 1 | 2 | 3 | 4 | 5
 export type FavoriteAnimeSnapshot = Pick<Anime, 'id' | 'title' | 'coverImage'>
 
 export interface FavoriteItem {
-  id:number,
-  status: CollectionStatus,
-  anime: FavoriteAnimeSnapshot,
-  updatedAt: number,
+  id: number
+  status: CollectionStatus
+  anime: FavoriteAnimeSnapshot
+  updatedAt: number
 }
-
-
-

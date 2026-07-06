@@ -1,8 +1,6 @@
-
 export function formatRelativeTime(unixSeconds: number, now: number = Date.now()): string {
   const target = unixSeconds * 1000
   const diff = now - target
-
 
   if (diff < 0) return formatAbsolute(target)
 
@@ -15,7 +13,6 @@ export function formatRelativeTime(unixSeconds: number, now: number = Date.now()
   if (hour < 24 && !isYesterday(target, now) && isSameDay(target, now)) {
     return `${hour} 小时前`
   }
-
 
   if (isSameDay(target, now)) return `今天 ${fmtTime(target)}`
   if (isYesterday(target, now)) return `昨天 ${fmtTime(target)}`

@@ -15,7 +15,7 @@
 
 <script setup lang="ts" name="">
 import { RouterLink } from 'vue-router'
-import  {type Anime}  from '@/types/anime'
+import { type Anime } from '@/types/anime'
 
 defineProps<{
   anime: Anime

@@ -3,9 +3,13 @@
     <div v-if="loading" class="loading">加载中...</div>
     <div v-else-if="error" class="error">{{ error }}</div>
     <template v-else>
-      <CommentCard v-for="c in comments" :key="c.id" :comment="c" class="comment-card"/>
+      <CommentCard v-for="c in comments" :key="c.id" :comment="c" class="comment-card" />
       <div v-if="!comments.length" class="empty">暂无吐槽</div>
-      <br><br><hr style="filter: brightness(0.5);"><br><h3 style="color: #aaa; text-align: center;">到底了</h3><br>
+      <br /><br />
+      <hr style="filter: brightness(0.5)" />
+      <br />
+      <h3 style="color: #aaa; text-align: center">到底了</h3>
+      <br />
     </template>
   </div>
 </template>

@@ -2,22 +2,29 @@
   <div class="comment-card">
     <img :src="comment.user.avatar.medium" :alt="comment.user.nickname" class="avatar" />
     <div class="body">
-      <div class="name" style="display: flex; align-items: flex-end; gap: 0px; margin:-4px 0 2px 0">{{ comment.user.nickname }}<span style="font-size: 14px; color: #aaa;">@{{ type(comment.type) }}</span></div>
-      <div class="comment-time" style="color: rgba(255, 255, 255, 0.6);">{{ formatRelativeTime(comment.updatedAt) }}</div>
+      <div
+        class="name"
+        style="display: flex; align-items: flex-end; gap: 0px; margin: -4px 0 2px 0"
+      >
+        {{ comment.user.nickname
+        }}<span style="font-size: 14px; color: #aaa">@{{ type(comment.type) }}</span>
+      </div>
+      <div class="comment-time" style="color: rgba(255, 255, 255, 0.6)">
+        {{ formatRelativeTime(comment.updatedAt) }}
+      </div>
       <div class="comment-content">{{ comment.comment }}</div>
-      <StarRating :score="comment.rate" style="transform: scale(0.9);"/>
+      <StarRating :score="comment.rate" style="transform: scale(0.9)" />
     </div>
   </div>
 </template>
 
 <script setup lang="ts" name="">
 import { type Comment } from '@/types/anime'
-import StarRating from './StarRating.vue';
+import StarRating from './StarRating.vue'
 import { formatRelativeTime } from '@/utils/time'
 import { type } from '@/utils/comType.ts'
 
 defineProps<{ comment: Comment }>()
-
 </script>
 
 <style scoped>
@@ -67,7 +74,7 @@ defineProps<{ comment: Comment }>()
   font-size: 17px;
 }
 .comment-time {
- font-size: 15px;
+  font-size: 15px;
 }
 .comment-content {
   margin-top: 6px;

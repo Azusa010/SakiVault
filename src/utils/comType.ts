@@ -1,4 +1,4 @@
-export function type(type:number) {
+export function type(type: number) {
   switch (type) {
     case 1:
       return '想看'
@@ -13,5 +13,4 @@ export function type(type:number) {
     default:
       return '未看'
   }
-
 }

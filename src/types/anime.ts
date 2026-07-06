@@ -1,9 +1,9 @@
 export interface Anime {
-  id:number;
-  title:string;
-  coverImage:string;
-  averageScore?:number;
-  episodes?:number;
+  id: number
+  title: string
+  coverImage: string
+  averageScore?: number
+  episodes?: number
 }
 
 export interface Comment {
@@ -21,8 +21,7 @@ export interface Comment {
       large: string
       medium: string
       small: string
-    },
+    }
     nickname: string
-
   }
 }

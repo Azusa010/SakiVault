@@ -1,5 +1,5 @@
 <template>
-  <div class="w overview-tab" style="margin-top: 30px;">
+  <div class="w overview-tab" style="margin-top: 30px">
     <section class="summary-section" v-if="anime.summary">
       <h2>剧情简介</h2>
       <p class="summary-text">{{ anime.summary }}</p>
@@ -7,12 +7,8 @@
     <section class="tags-section">
       <h2>标签</h2>
       <div class="tags-list">
-        <span
-          v-for="(tag, index) in anime?.tags"
-          :key="index"
-          class="tag-item"
-        >
-          {{ tag.name }}  <span style="color: var(--color-primary);">{{ tag.count }}</span>
+        <span v-for="(tag, index) in anime?.tags" :key="index" class="tag-item">
+          {{ tag.name }} <span style="color: var(--color-primary)">{{ tag.count }}</span>
         </span>
       </div>
     </section>
@@ -23,8 +19,6 @@
 defineProps<{
   anime: any
 }>()
-
-
 </script>
 
 <style scoped>

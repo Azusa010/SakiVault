@@ -280,7 +280,6 @@
   transition-delay: calc(var(--index) * 40ms);
 }
 
-
 .dropdown-leave-active .dropdown-item {
   transition:
     opacity 150ms ease,
@@ -313,7 +312,6 @@
   transform: scaleY(0);
   opacity: 0;
 }
-
 
 .tab-nav {
   margin: 50px auto 0 auto;

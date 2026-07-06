@@ -39,7 +39,9 @@ import { RouterLink } from 'vue-router'
 }
 
 .nav-logo {
-  font-family: 'SF Pro SC', 'SF Pro Display', 'PingFang SC', 'Lucida Grande', 'Helvetica Neue', Helvetica, Arial, sans-serif;
+  font-family:
+    'SF Pro SC', 'SF Pro Display', 'PingFang SC', 'Lucida Grande', 'Helvetica Neue', Helvetica,
+    Arial, sans-serif;
   font-size: 1.9rem;
   font-weight: 800;
   color: var(--color-primary);

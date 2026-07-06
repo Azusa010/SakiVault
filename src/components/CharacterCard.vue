@@ -4,7 +4,7 @@
     ref="cardRef"
     @mousemove="handleMouseMove"
     @mouseleave="handleMouseLeave"
-    @click="$emit('select',character!)"
+    @click="$emit('select', character!)"
   >
     <img
       :src="
@@ -51,7 +51,6 @@ const emit = defineEmits<{
   select: [character: NonNullable<typeof character.value>]
 }>()
 
-
 type InfoboxItem = { key: string; value: string | string[] }
 const character = ref<{
   birth_year: number
@@ -71,7 +70,6 @@ watch(
     try {
       const res = await getDetailCharacterById(id)
       character.value = res.data
-
     } catch (e) {
       console.error(e)
     }

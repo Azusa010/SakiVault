@@ -8,7 +8,7 @@
     <!-- 首次加载 -->
     <div v-else-if="loading && results.length === 0" class="state-message">
       <div class="results-grid">
-        <SkeletonCard v-for="n in 10" :key="n"/>
+        <SkeletonCard v-for="n in 10" :key="n" />
       </div>
     </div>
     <!-- 还没搜 -->
@@ -16,33 +16,27 @@
       <p>输入关键词或者筛选条件开始搜索</p>
     </div>
     <!-- 结果为空 -->
-     <div v-else-if="results.length===0" class="state-message">
+    <div v-else-if="results.length === 0" class="state-message">
       <p>没有找到相关结果</p>
     </div>
     <!-- 有结果 -->
-     <div v-else>
+    <div v-else>
       <div class="results-grid">
-        <AnimeCard
-          v-for="anime in results"
-          :key="anime.id"
-          :anime="anime"
-        />
+        <AnimeCard v-for="anime in results" :key="anime.id" :anime="anime" />
       </div>
       <!-- 加载更多 -->
-       <div v-if="hasMore" class="load-more">
-        <button @click="handleLoadMore" class="load-more-btn" :disabled="loading" >
+      <div v-if="hasMore" class="load-more">
+        <button @click="handleLoadMore" class="load-more-btn" :disabled="loading">
           {{ loading ? '加载中...' : '加载更多' }}
         </button>
-       </div>
-     </div>
-
-
+      </div>
+    </div>
   </div>
 </template>
 
 <script setup lang="ts" name="SearchResults">
 import { type Anime } from '@/types/anime'
-import SkeletonCard from './SkeletonCard.vue';
+import SkeletonCard from './SkeletonCard.vue'
 import AnimeCard from './AnimeCard.vue'
 
 defineProps<{
@@ -55,7 +49,7 @@ defineProps<{
 
 const emit = defineEmits<{
   'load-more': []
-  'retry': []
+  retry: []
 }>()
 
 const handleLoadMore = () => {
