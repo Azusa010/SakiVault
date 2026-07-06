@@ -26,119 +26,194 @@ import { useAuthStore } from '@/stores/authStore';
 const authStore = useAuthStore();
 
 </script>
+
+
 <style scoped>
 .navbar {
   position: fixed;
   top: 0;
   left: 0;
   right: 0;
-  height: 90px;
+  height: 82px;
   z-index: 100;
-  background: rgba(11, 14, 20, 0.55);
-  backdrop-filter: blur(12px);
-  -webkit-backdrop-filter: blur(12px);
-  border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+
+  background: rgba(15, 18, 25, 0.6);
+  backdrop-filter: blur(18px);
+  -webkit-backdrop-filter: blur(18px);
+
+  border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.25);
 }
+
 .nav-container {
   max-width: 1280px;
   height: 100%;
-  margin: 0 115px;
-  padding: 0 var(--space-xs);
+  margin: 0 auto;
+  padding: 0 40px;
+
   display: flex;
   align-items: center;
   justify-content: space-between;
 }
+
+/* LOGO */
 .nav-logo {
   font-family:
-    'SF Pro SC', 'SF Pro Display', 'PingFang SC', 'Lucida Grande', 'Helvetica Neue', Helvetica,
-    Arial, sans-serif;
-  font-size: 1.9rem;
+    'SF Pro Display', 'PingFang SC', sans-serif;
+
+  font-size: 1.8rem;
   font-weight: 800;
+
   color: var(--color-primary);
   text-decoration: none;
-  letter-spacing: 0.02em;
+
   display: flex;
   align-items: center;
-  gap: 0.35em;
-  transition: filter 0.3s ease;
+  gap: 6px;
+
+  letter-spacing: 0.04em;
+
+  transition: all 0.3s ease;
 }
+
 .nav-logo:hover {
-  filter: drop-shadow(0 0 6px rgba(255, 107, 139, 0.5));
+  transform: translateY(-1px);
+  text-shadow: 0 0 12px rgba(255, 107, 139, 0.6);
 }
+
+
 .nav-links {
   display: flex;
-  gap: var(--space-lg);
+  gap: 28px;
   align-items: center;
 }
+
 .nav-links a {
   position: relative;
-  color: rgba(255, 255, 255, 0.7);
+
+  color: rgba(255, 255, 255, 0.65);
   text-decoration: none;
-  font-size: 1.2rem;
+
+  font-size: 1.1rem;
   font-weight: 500;
-  padding: 0.4em 0;
-  transition: color 0.25s ease;
+
+  padding: 4px 0;
+
+  transition: all 0.25s ease;
 }
+
+/* 下划线动画升级 */
 .nav-links a::after {
   content: '';
   position: absolute;
-  bottom: 0;
-  left: 0;
+  bottom: -2px;
+  left: 50%;
+
   width: 0;
   height: 2px;
-  background: var(--color-primary);
-  border-radius: 2px;
-  transition: width 0.3s var(--ease-out);
+
+  background: linear-gradient(
+    90deg,
+    transparent,
+    var(--color-primary),
+    transparent
+  );
+
+  transform: translateX(-50%);
+  transition: width 0.3s ease;
 }
+
 .nav-links a:hover {
-  color: rgba(255, 255, 255, 1);
+  color: #fff;
 }
+
 .nav-links a:hover::after {
   width: 100%;
 }
+
+/* 当前路由 */
 .nav-links a.router-link-active {
   color: var(--color-primary);
 }
+
 .nav-links a.router-link-active::after {
   width: 100%;
 }
+
+/* 用户区域 */
 .user-link {
   display: flex;
   align-items: center;
-  gap: 8px;
+  gap: 10px;
+
+  padding: 6px 10px;
+  border-radius: 30px;
+
+  transition: all 0.25s ease;
 }
+
+.user-link:hover {
+  background: rgba(255, 255, 255, 0.05);
+}
+
+/* 头像 */
 .nav-avatar {
-  width: 32px;
-  height: 32px;
+  width: 34px;
+  height: 34px;
+
   border-radius: 50%;
   object-fit: cover;
-  border: 1px solid rgba(255, 255, 255, 0.15);
+
+  border: 1.5px solid rgba(255, 255, 255, 0.2);
+
+  transition: all 0.3s ease;
 }
+
+.user-link:hover .nav-avatar {
+  border-color: var(--color-primary);
+  box-shadow: 0 0 8px rgba(255, 107, 139, 0.5);
+}
+
+/* 昵称 */
 .nav-nickname {
-  font-size: 1rem;
+  font-size: 0.95rem;
   color: rgba(255, 255, 255, 0.9);
 }
+
+
 .nav-login {
-  padding: 6px 16px;
-  border-radius: 20px;
-  background: var(--color-primary);
+  padding: 8px 18px;
+
+  border-radius: 999px;
+
+  background: linear-gradient(
+    135deg,
+    #ff6b8b,
+    #ff8fa3
+  );
+
   color: #fff !important;
+
+  font-weight: 600;
+  font-size: 0.95rem;
+
+  box-shadow: 0 6px 18px rgba(255, 107, 139, 0.35);
+
+  transition: all 0.25s ease;
 }
+
+.nav-login:hover {
+  transform: translateY(-1px) scale(1.03);
+  box-shadow: 0 10px 26px rgba(255, 107, 139, 0.45);
+}
+
+.nav-login:active {
+  transform: scale(0.96);
+}
+
+/* 去掉下划线 */
 .nav-login::after {
   display: none;
-}
-.nav-logout {
-  background: transparent;
-  border: 1px solid rgba(255, 255, 255, 0.2);
-  color: rgba(255, 255, 255, 0.7);
-  padding: 6px 14px;
-  border-radius: 20px;
-  font-size: 0.95rem;
-  cursor: pointer;
-  transition: all 0.2s ease;
-}
-.nav-logout:hover {
-  border-color: #ff6b6b;
-  color: #ff6b6b;
 }
 </style>
