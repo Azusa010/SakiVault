@@ -29,7 +29,7 @@ defineProps<Props>()
 .bookshelf-card {
   position: relative;
   display: block;
-  width: 70px;
+  width: 180px;
   flex-shrink: 0;
   aspect-ratio: 3 / 4;
   border-radius: var(--radius-sm);

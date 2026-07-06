@@ -398,8 +398,8 @@ window.addEventListener('resize', updateItemWidth)
 }
 
 .day-tick {
-  font-size: 0.7rem;
-  color: var(--text-disabled);
+  font-size: 0.9rem;
+  color: var(--text-main);
   font-variant-numeric: tabular-nums;
   padding-left: 4px;
   border-left: 1px solid rgba(255, 255, 255, 0.1);
