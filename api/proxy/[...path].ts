@@ -7,19 +7,34 @@ export default {
 
     const targetUrl = `https://next.bgm.tv/p1/${targetPath}${queryString}`
 
+    const headers: Record<string, string> = {
+      Acceot: request.headers.get('Accept') || 'application/json',
+    }
+
+    const authorization = request.headers.get('Authorization')
+
+    if (authorization) {
+      headers.Authorization = authorization
+    }
+
+    const contentType = request.headers.get('Content-Type')
+    if (contentType) {
+      headers['Content-Type'] = contentType
+    }
+
     try {
       const response = await fetch(targetUrl, {
         method: request.method,
-        headers: {
-          Accept: 'application/json',
-        },
+        headers,
+        body:
+          request.method !== 'GET' && request.method !== 'HEAD' ? await request.text() : undefined,
       })
 
       const data = await response.text()
       return new Response(data, {
         status: response.status,
         headers: {
-          'Content-Type': 'application/json',
+          'Content-Type': response.headers.get('Content-Type')||'application/json',
           'Access-Control-Allow-Origin': '*',
         },
       })

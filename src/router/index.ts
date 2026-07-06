@@ -52,6 +52,11 @@ const router = createRouter({
       name: 'favorite',
       component: () => import('@/views/FavoritesView.vue'),
     },
+    {
+      path: '/login',
+      name: 'login',
+      component: () => import('@/views/LoginView.vue'),
+    }
   ],
 })
 

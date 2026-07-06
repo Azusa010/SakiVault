@@ -263,3 +263,71 @@ export async function searchSubjects(params: SearchSubjectParmas) {
     }
   })
 }
+
+
+// 登陆相关
+
+
+//Bangumi用户信息
+export interface BangumiUser {
+  username: string,
+  nickname: string,
+  avatar?:{
+    large?: string,
+    medium?: string,
+    small?: string,
+  },
+  id: number,
+  sign?:string,
+}
+
+// 获取当前登陆用户信息
+export async function getCurrentUser():Promise<BangumiUser>{
+  const response = await bangumiClient.get('/v0/me')
+  return response.data
+}
+
+// 获得用户收藏条目
+export async function getUserCollections(username:string,parmas?:{
+  subject_type?:number,
+  type?:number,
+  limit?:number,
+  offset?:number,
+}){
+  const response = await bangumiClient.get(`/v0/users/${username}/collections`,{
+    params: {
+      subject_type:2,
+      ...parmas
+    }
+  })
+  return response.data
+}
+
+// 获得用户单个番剧收藏
+export async function getUserCollectionById(username:string,subject_id:number){
+  const response = await bangumiClient.get(`/v0/users/${username}/collections/${subject_id}`)
+  return response.data
+}
+
+// 新增或更新用户单个番剧收藏
+export async function updateUserCollection(subject_id:number,payload:{
+  type:number,
+  rate?:number,
+  ep_status?:number,
+  vol_status?:number,
+  comment?:string,
+  private?:boolean,
+  tags?:string[],
+}){
+  const response = await bangumiClient.put(`v0/users/-/collections/${subject_id}`, payload)
+  return response.data
+}
+
+// 给 bugumiClient 注入token
+bangumiClient.interceptors.request.use((config)=>{
+  const token = localStorage.getItem('bangumi-access-token')
+  if(token){
+    config.headers.Authorization = `Bearer ${token}`
+  }
+  return config
+})
