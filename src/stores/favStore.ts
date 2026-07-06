@@ -5,6 +5,7 @@ import type { CollectionStatus, FavoriteAnimeSnapshot, FavoriteItem } from '@/ty
 const STORAGE_KEY = 'saki-favorites'
 
 export const useFavStore = defineStore('favStore', () => {
+  // 存储收藏项
   const items = ref<Record<number, FavoriteItem>>({})
 
   function loadFromStorage() {
