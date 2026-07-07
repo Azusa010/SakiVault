@@ -1,5 +1,6 @@
 import axios from 'axios'
 
+
 interface BangumiCollection {
   on_hold?: number
   dropped?: number
@@ -15,6 +16,14 @@ interface BangumiSubject {
   eps?: number
   rating?: { score?: number }
   collection?: BangumiCollection
+}
+
+interface BangumiSearchResult {
+  id:number,
+  name:string,
+  name_cn?:string,
+  eps?:number,
+  rating?:{score?:number},
 }
 
 const bangumiClient = axios.create({
@@ -49,40 +58,14 @@ export async function getAnimeCurrentEpisodes(id: number): Promise<number> {
       params: { subject_id: id, type: 0 }, // 0 表示本篇
     })
     const episodes = response.data.data || []
-    const today: any = new Date().toISOString().split('T')[0]
-    return episodes.filter((ep: any) => ep.airdate < today).length
+    const today: (string|undefined) = new Date().toISOString().split('T')[0]
+    if(today === undefined) return 0
+    return episodes.filter((ep: { airdate: string }) => ep.airdate < today).length
   } catch {
     return 0
   }
 }
 
-// 获取当前季度的番剧列表
-export async function getCurrentSeasonAnime() {
-  const response = await bangumiClient.get('/calendar')
-  const allItems = response.data.flatMap((day: any) => day.items || [])
-
-  const detailedItems = await Promise.all(
-    allItems.map(async (item: any) => {
-      try {
-        const detail = await bangumiClient.get(`/v0/subjects/${item.id}`)
-        return {
-          ...item,
-          eps: detail.data.eps ?? item.eps ?? item.eps_count,
-        }
-      } catch {
-        return item
-      }
-    }),
-  )
-
-  return detailedItems.map((item: any) => ({
-    id: item.id,
-    title: item.name_cn || item.name,
-    coverImage: getAnimeImageUrl(item.id, 'medium'),
-    averageScore: item.rating?.score ?? 0,
-    episodes: item.eps ?? item.eps_count ?? 0,
-  }))
-}
 
 // 获取最受欢迎的番剧列表
 export async function getPopularAnime(limit = 10) {
@@ -90,7 +73,7 @@ export async function getPopularAnime(limit = 10) {
     params: { type: 2, sort: 'rank', limit },
   })
 
-  return response.data.data.map((item: any) => ({
+  return response.data.data.map((item: { id: number; name_cn?: string; name: string; rating?: { score?: number }; eps?: number }) => ({
     id: item.id,
     title: item.name_cn || item.name,
     coverImage: getAnimeImageUrl(item.id, 'large'),
@@ -226,7 +209,7 @@ interface SearchSubjectParmas {
 // 搜索番剧
 export async function searchSubjects(params: SearchSubjectParmas) {
   const { keyword, year, rating, tags, limit = 20, offset = 0 } = params
-  const filter: Record<string, any> = {
+  const filter: Record<string, number | string[] | string|number[]> = {
     type: [2],
   }
   if (year === 'earlier') {
@@ -251,9 +234,9 @@ export async function searchSubjects(params: SearchSubjectParmas) {
     { params: { limit, offset } },
   )
 
-  const items = response.data.data || []
+  const items: BangumiSearchResult[] = response.data.data || []
 
-  return items.map((item: any) => {
+  return items.map((item: BangumiSearchResult) => {
     return {
       id: item.id,
       title: item.name_cn || item.name,
