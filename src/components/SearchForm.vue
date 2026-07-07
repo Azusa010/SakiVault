@@ -17,8 +17,30 @@
       />
     </div>
 
+    <!-- 移动端工具条 -->
+    <div class="mobile-filter-bar">
+      <button type="button" @click="toggleFilters" class="mobile-filter-trigger">
+        <span>筛选</span>
+        <span class="mobile-filter-count" v-if="year || rating || (tags && tags.length)">已选</span>
+      </button>
+
+      <!-- 已选 -->
+      <div v-if="year || rating || (tags && tags.length)" class="mobile-filter-summary">
+        <span v-if="year">年份:{{ year }}</span>
+        <span v-if="rating">评分:{{ rating }}</span>
+        <span v-if="tags && tags.length">   tags:</span>
+        <span v-for="tag in tags" :key="tag">{{ tag }}</span>
+      </div>
+    </div>
+
     <!-- 筛选器区域 -->
-    <div class="filters">
+    <div class="filters" :class="{ 'is-mobile-open': isMobileOpen }">
+      <!-- 移动端 -->
+      <div class="filters-header">
+        <h2 class="filters-title">筛选条件</h2>
+        <button type="button" class="reset-btn reset-btn-inline" @click="handleReset">重置</button>
+      </div>
+
       <!-- 年份筛选 -->
       <div class="filter-row">
         <span class="filter-label">年份</span>
@@ -70,16 +92,12 @@
           </span>
         </div>
       </div>
-
-      <!-- 重置筛选按钮 -->
-      <button type="button" class="reset-btn" @click="handleReset">重置筛选</button>
     </div>
   </div>
 </template>
 
 <script setup lang="ts" name="SearchForm">
-import { ref } from 'vue'
-import { computed } from 'vue'
+import { ref, computed } from 'vue'
 
 interface Props {
   keyword: string
@@ -160,6 +178,18 @@ function handleEnter() {}
 
 function handleReset() {
   emit('reset')
+  closeFilters()
+}
+
+// 移动端相关
+const isMobileOpen = ref(false)
+// 切换筛选器显示状态
+function toggleFilters() {
+  isMobileOpen.value = !isMobileOpen.value
+}
+
+function closeFilters() {
+  isMobileOpen.value = false
 }
 </script>
 
@@ -209,6 +239,19 @@ function handleReset() {
   gap: var(--space-md);
 }
 
+.filters-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-sm);
+}
+
+.filters-title {
+  font-size: 1rem;
+  color: var(--text-main);
+  margin: 0;
+}
+
 .filter-row {
   display: flex;
   align-items: center;
@@ -245,7 +288,7 @@ function handleReset() {
 }
 
 .chip.active {
-  background-color: var(--color-primary);
+  background-color: var(--color-primary-alpha);
   border-color: var(--color-primary);
   color: white;
 }
@@ -255,6 +298,7 @@ function handleReset() {
   align-items: center;
   gap: var(--space-sm);
   flex-wrap: wrap;
+  width: 100%;
 }
 
 .tag-input-wrapper input {
@@ -302,8 +346,8 @@ function handleReset() {
   padding: var(--space-xs) var(--space-md);
   border-radius: var(--radius-md);
   border: 1px solid var(--surface-overlay);
-  background-color: transparent;
-  color: var(--text-muted);
+  background-color: var(--color-primary-alpha);
+  color: var(--text-main);
   font-size: 0.9rem;
   cursor: pointer;
   transition: all var(--duration-fast);
@@ -312,5 +356,110 @@ function handleReset() {
 .reset-btn:hover {
   border-color: var(--color-primary);
   color: var(--color-primary);
+}
+
+.mobile-filter-bar {
+  display: none;
+}
+
+.mobile-filter-trigger {
+  border: 1px solid var(--surface-overlay);
+  background-color: var(--surface-card);
+  color: var(--text-main);
+  border-radius: var(--radius-md);
+  padding: 10px 14px;
+  font-size: 0.9rem;
+  cursor: pointer;
+}
+
+.mobile-filter-trigger-count {
+  margin-left: 6px;
+  color: var(--color-primary);
+  font-size: 0.82rem;
+}
+
+.mobile-filter-summary {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  color: var(--text-muted);
+  font-size: 0.9rem;
+}
+
+@media (max-width: 768px) {
+  .tag-input-wrapper input {
+    width: 100%;
+    padding: var(--space-xs) var(--space-md);
+    border-radius: var(--radius-md);
+    border: 1px solid var(--surface-overlay);
+    background-color: var(--surface-card);
+    color: var(--text-main);
+    font-size: 0.9rem;
+    outline: none;
+    min-width: 0;
+  }
+
+  .search-form {
+    gap: var(--space-md);
+    padding: var(--space-md);
+  }
+  .search-box {
+    padding: 12px 14px;
+  }
+  .filters {
+    gap: var(--space-sm);
+    padding: var(--space-md);
+    border-radius: var(--radius-md);
+    background-color: rgba(255, 255, 255, 0.03);
+    border: 1px solid rgba(255, 255, 255, 0.04);
+  }
+  .filter-row {
+    flex-direction: column;
+    align-items: stretch;
+    gap: 10px;
+  }
+
+  .filter-label {
+    min-width: 0;
+    font-size: 0.85rem;
+  }
+
+  .chip-group {
+    gap: 6px;
+  }
+  .chip {
+    padding: 6px 12px;
+    font-size: 0.82rem;
+  }
+
+  .tag-chip {
+    align-self: flex-start;
+  }
+
+  .reset-btn-inline {
+    padding: 6px 12px;
+    font-size: 0.82rem;
+  }
+
+  .mobile-filter-bar {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+  }
+
+  .mobile-filter-trigger {
+    width: 100%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+
+  .filters {
+    display: none;
+  }
+
+  .filters.is-mobile-open {
+    display: flex;
+  }
 }
 </style>

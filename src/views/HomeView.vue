@@ -1,16 +1,34 @@
 <template>
   <div class="home-view">
     <!-- Hero轮播图 -->
-    <HeroCarousel :items="currentSeasonAnime.slice(0, 5)" />
+    <HeroCarousel :items="currentSeasonAnime.slice(0, 5)" class="desktop-hero-carousel" />
     <div
-      class="hero-spacer"
+      class="hero-spacer desktop-hero-spacer"
       style="position: relative; width: 1px; height: 100vh; pointer-events: none"
     ></div>
+
+    <!-- 移动端首页 -->
+    <section class="mobile-hero">
+      <div class="mobile-hero-content">
+        <!-- 搜索栏 -->
+        <section class="mobile-search-section">
+          <div class="mobile-search-box">
+            <input
+              type="text"
+              v-model="searchQuery"
+              placeholder="搜索番剧..."
+              @keyup.enter="handleSearch"
+            />
+            <button @click="handleSearch" class="mobile-search-btn">搜索</button>
+          </div>
+        </section>
+      </div>
+    </section>
+
     <!-- Hero区域 -->
     <section class="hero">
       <div class="hero-content">
         <h1 class="hero-title">SakiVault</h1>
-        <p class="hero-subtitle"></p>
         <!-- 搜索栏 -->
         <section class="search-section">
           <div class="search-box">
@@ -65,7 +83,7 @@
 import HeroCarousel from '@/components/HeroCarousel.vue'
 import { ref, onMounted } from 'vue'
 import { type Anime } from '@/types/anime'
-import {  getPopularAnime, getRecentPopularAnime } from '@/api/bangumi'
+import { getPopularAnime, getRecentPopularAnime } from '@/api/bangumi'
 import { useRouter } from 'vue-router'
 import AnimeCard from '@/components/AnimeCard.vue'
 import SkeletonCard from '@/components/SkeletonCard.vue'
@@ -109,6 +127,57 @@ onMounted(async () => {
 </script>
 
 <style scoped>
+.desktop-hero-carousel,
+.desktop-hero-spacer {
+  display: block;
+}
+
+.mobile-hero {
+  display: none;
+}
+
+.mobile-hero-content {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-sm);
+}
+
+.mobile-search-section {
+  width: 100%;
+}
+
+.mobile-search-box {
+  display: flex;
+  gap: var(--space-sm);
+}
+
+.mobile-search-box input {
+  flex: 1;
+  min-width: 0;
+  padding: 12px 14px;
+  border-radius: var(--radius-md);
+  border: 1px solid var(--surface-overlay);
+  background-color: var(--surface-card);
+  color: var(--text-main);
+  font-size: 0.95rem;
+}
+
+.mobile-search-box input:focus {
+  outline: 2px solid var(--color-primary);
+}
+
+.mobile-search-btn {
+  flex-shrink: 0;
+  padding: 0 16px;
+  border: none;
+  border-radius: var(--radius-md);
+  background: var(--color-primary);
+  color: #081018;
+  font-size: 0.95rem;
+  font-weight: 700;
+  cursor: pointer;
+}
+
 .hero {
   position: relative;
   min-height: 420px;
@@ -236,5 +305,50 @@ onMounted(async () => {
   display: grid;
   grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
   gap: var(--space-lg);
+}
+
+@media (max-width: 768px) {
+  .desktop-hero-carousel,
+  .desktop-hero-spacer,
+  .hero {
+    display: none;
+  }
+
+  .mobile-hero {
+    display: block;
+    padding: var(--space-lg) var(--space-md) var(--space-md);
+  }
+
+  .search-section {
+    width: 100%;
+    padding: var(--space-md) 0 0;
+  }
+
+  .search-box {
+    max-width: 100%;
+    height: auto;
+  }
+
+  .search-box:focus-within {
+    max-width: 100%;
+  }
+
+  .section {
+    padding: var(--space-lg) var(--space-md);
+  }
+
+  .section-title {
+    font-size: 1.2rem;
+    margin-bottom: var(--space-md);
+  }
+
+  .grid {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 12px;
+  }
+
+  .home-view {
+    padding-bottom: var(--space-md);
+  }
 }
 </style>

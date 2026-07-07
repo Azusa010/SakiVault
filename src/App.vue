@@ -25,6 +25,7 @@ import MouseEffect from '@/components/MouseEffect.vue';
   min-height: 100vh;
 }
 .main-content {
-  padding-top: 90px;
+  padding-top: var(--nav-offset-top);
+  padding-bottom: var(--nav-offset-bottom);
 }
 </style>

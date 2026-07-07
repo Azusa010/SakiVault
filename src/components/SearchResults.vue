@@ -112,4 +112,11 @@ const handleRetry = () => {
   justify-content: center;
   margin-top: var(--space-xl);
 }
+
+@media (max-width: 768px) {
+  .results-grid {
+    grid-template-columns: repeat(3, minmax(0px, 1fr));
+  }
+
+}
 </style>

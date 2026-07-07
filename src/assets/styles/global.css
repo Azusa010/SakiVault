@@ -39,6 +39,12 @@
   --space-lg: 24px;
   --space-xl: 32px;
 
+  /* 移动端适配 */
+  --nav-offset-top: 90px;
+  --nav-offset-bottom: 0px;
+  --mobile-topbar-height: 64px;
+  --mobile-tabbar-height: 68px;
+
   /* --- 动画与缓动 (Animations) --- */
   --duration-fast: 0.15s;
   --duration-normal: 0.3s;
@@ -69,7 +75,7 @@ body {
     Helvetica,
     Arial,
     sans-serif;
-  font-weight: 450;
+  font-weight: 400;
   line-height: 1.5;
   font-size: 1rem;
   /* 背景与文字基准 */
@@ -120,4 +126,16 @@ a:hover {
 
 .w {
   padding: 0 115px;
+}
+
+
+@media (max-width:768px){
+  :root {
+    --nav-offset-top: var(--mobile-topbar-height);
+    --nav-offset-bottom: var(--mobile-tabbar-height);
+  }
+
+  .w {
+    padding: 0 var(--space-md);
+  }
 }
