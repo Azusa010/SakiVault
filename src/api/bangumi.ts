@@ -133,6 +133,25 @@ export async function getRecentPopularAnime(limit = 30) {
     .slice(0, limit)
 }
 
+// 获得热门条目
+export async function getHotSubjects(limit = 30){
+  const response = await bangumiPrivateClient.get('/trending/subjects', {
+    params:{
+      type: 2,
+      limit,
+    }
+  })
+
+  return response.data.data.map((item:{count:number,subject:{id:number,name_cn?:string,name:string,rating?:{score?:number,rank?:number},eps?:number}}) => ({
+    id: item.subject.id,
+    title: item.subject.name_cn || item.subject.name,
+    coverImage: getAnimeImageUrl(item.subject.id, 'large'),
+    averageScore: item.subject.rating?.score?.toFixed(1),
+    rank: item.subject?.rating?.rank,
+  }))
+}
+
+
 // 获得番剧的详细信息
 export async function getAnimeById(id: number) {
   const [detailRes, currentEpisodes] = await Promise.all([

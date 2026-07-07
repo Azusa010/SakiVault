@@ -4,6 +4,7 @@ export interface Anime {
   coverImage: string
   averageScore?: number
   episodes?: number
+  rank?: number
 }
 
 export interface Comment {

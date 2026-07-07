@@ -83,7 +83,7 @@
 import HeroCarousel from '@/components/HeroCarousel.vue'
 import { ref, onMounted } from 'vue'
 import { type Anime } from '@/types/anime'
-import { getPopularAnime, getRecentPopularAnime } from '@/api/bangumi'
+import { getPopularAnime, getHotSubjects } from '@/api/bangumi'
 import { useRouter } from 'vue-router'
 import AnimeCard from '@/components/AnimeCard.vue'
 import SkeletonCard from '@/components/SkeletonCard.vue'
@@ -113,7 +113,7 @@ onMounted(async () => {
   loading.value = true
   popularLoading.value = true
   try {
-    const [current, popular] = await Promise.all([getRecentPopularAnime(), getPopularAnime(12)])
+    const [current, popular] = await Promise.all([getHotSubjects(), getPopularAnime(12)])
     currentSeasonAnime.value = current
     popularAnime.value = popular
   } catch (error) {
