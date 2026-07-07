@@ -49,6 +49,8 @@ export function toBangumiCollectionType(status: CollectionStatus): number {
       return BangumiCollectionType.Onhold
     case 'dropped':
       return BangumiCollectionType.Dropped
+    default:
+      throw new Error(`Unknown SakiVault collection status: ${status}`)
   }
 }
 

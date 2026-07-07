@@ -28,12 +28,10 @@ export const useFavStore = defineStore('favStore', () => {
     }
   }
 
-  function isCollectionStatus(status:string): status is CollectionStatus {
-    return ['want', 'watching', 'watched', 'onhold', 'dropped'].includes(status)
-  }
+
 
   function setStatus(id: number, status: CollectionStatus, anime: FavoriteAnimeSnapshot) {
-    if (!isCollectionStatus(status)) {
+    if (status === 0) {
       remove(id)
       return
     }

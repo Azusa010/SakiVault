@@ -32,6 +32,7 @@ export function useFavorites() {
   // 按收藏状态分组
   const groupedByStatus = computed<Record<CollectionStatus, FavoriteItem[]>>(() => {
     const groups: Record<CollectionStatus, FavoriteItem[]> = {
+      0:[],
       want: [],
       watching: [],
       watched: [],

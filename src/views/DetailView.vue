@@ -49,7 +49,7 @@
               class="dropdown-item"
               v-for="(v, index) in STATUS_OPTIONS"
               :key="v.value"
-              @click="selectStatus(v)"
+              @click="selectStatus({ value: v.value as CollectionStatus, label: v.label })"
               :style="{ '--index': index }"
             >
               <span :class="`iconfont ${v.icon}`"></span>
@@ -140,13 +140,7 @@ function selectStatus(params: { value: CollectionStatus; label: string }) {
   isDropdownOpen.value = false
 
   if (!anime.value) return
-  if (
-    params.value !== 'want' &&
-    params.value !== 'watching' &&
-    params.value !== 'watched' &&
-    params.value !== 'onhold' &&
-    params.value !== 'dropped'
-  ) {
+  if (params.value === 0) {
     removeFavorite(id)
   } else {
     setFavoriteStatus(id, params.value, {

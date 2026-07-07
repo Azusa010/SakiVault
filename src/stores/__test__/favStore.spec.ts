@@ -45,10 +45,10 @@ describe('favStore',()=>{
     const store = useFavStore()
     const anime = createAnime(1)
 
-    store.setStatus(1,1,anime)
+    store.setStatus(1,'want',anime)
 
     expect(store.items[1]).toBeDefined()
-    expect(store.items[1]?.status).toBe(1)
+    expect(store.items[1]?.status).toBe('want')
     expect(store.items[1]?.anime).toEqual(anime)
   })
 
@@ -56,18 +56,18 @@ describe('favStore',()=>{
     const store = useFavStore()
     const anime = createAnime(1)
 
-    store.setStatus(1,1,anime)
-    store.setStatus(1,2,anime)
+    store.setStatus(1,'want',anime)
+    store.setStatus(1,'watching',anime)
 
     expect(store.items[1]).toBeDefined()
-    expect(store.items[1]?.status).toBe(2)
+    expect(store.items[1]?.status).toBe('watching')
   })
 
   it('setStatus 状态为0时删除收藏',()=>{
     const store = useFavStore()
     const anime = createAnime(1)
 
-    store.setStatus(1,1,anime)
+    store.setStatus(1,'want',anime)
     store.setStatus(1,0,anime)
 
     expect(store.items[1]).toBeUndefined()
@@ -77,7 +77,7 @@ describe('favStore',()=>{
     const store = useFavStore()
     const anime = createAnime(1)
 
-    store.setStatus(1,1,anime)
+    store.setStatus(1,'want',anime)
 
     store.remove(1)
 
@@ -88,9 +88,9 @@ describe('favStore',()=>{
     const store = useFavStore()
     const anime = createAnime(1)
 
-    store.setStatus(1,1,anime)
+    store.setStatus(1,'want',anime)
 
-    expect(store.getById(1)?.status).toBe(1)
+    expect(store.getById(1)?.status).toBe('want')
     expect(store.getById(1)?.anime).toEqual(anime)
   })
 
@@ -98,12 +98,12 @@ describe('favStore',()=>{
     const store = useFavStore()
     const anime = createAnime(1)
 
-    store.setStatus(1,1,anime)
+    store.setStatus(1,'want',anime)
     const saved = localStorage.getItem('saki-favorites')
     expect(saved).not.toBeNull()
     const parsed = JSON.parse(saved!)
     expect(parsed[1]).toBeDefined()
-    expect(parsed[1].status).toBe(1)
+    expect(parsed[1].status).toBe('want')
     expect(parsed[1].anime).toEqual(anime)
   })
 
