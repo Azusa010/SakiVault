@@ -63,9 +63,12 @@ import { RouterLink } from 'vue-router'
 import BookshelfCard from '@/components/BookshelfCard.vue'
 
 const { groupedByStatus } = useFavorites()
-const filterOptions = STATUS_OPTIONS.filter((o) => o.value !== 0)
+const filterOptions = STATUS_OPTIONS.filter((o) => o.value !== 0) as {
+  label: string
+  value: CollectionStatus
+}[]
 
-const activeFilter = ref<number>(1)
+const activeFilter = ref<CollectionStatus>('want') // 默认显示“想看”状态的收藏项
 const sideBarRef = ref<HTMLElement | null>(null)
 const itemWidth = ref(120)
 
@@ -140,13 +143,13 @@ const currentStatusLabel = computed(() => {
   return STATUS_LABELS[activeFilter.value as CollectionStatus]
 })
 
-function optionCount(filterValue: number): number {
+function optionCount(filterValue: CollectionStatus | number): number {
   return (groupedByStatus.value[filterValue as CollectionStatus] ?? []).length
 }
 
 // 涟漪动画效果
-function handleFilterClick(value: number, event: MouseEvent) {
-  activeFilter.value = value
+function handleFilterClick(value: CollectionStatus | number, event: MouseEvent) {
+  activeFilter.value = value as CollectionStatus
 
   // 涟漪动画
   const li = event.currentTarget as HTMLElement

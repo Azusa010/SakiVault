@@ -28,8 +28,12 @@ export const useFavStore = defineStore('favStore', () => {
     }
   }
 
+  function isCollectionStatus(status:string): status is CollectionStatus {
+    return ['want', 'watching', 'watched', 'onhold', 'dropped'].includes(status)
+  }
+
   function setStatus(id: number, status: CollectionStatus, anime: FavoriteAnimeSnapshot) {
-    if (status === 0) {
+    if (!isCollectionStatus(status)) {
       remove(id)
       return
     }
@@ -46,6 +50,14 @@ export const useFavStore = defineStore('favStore', () => {
     saveToStorage()
   }
 
+  function saveFavorite(item: FavoriteItem) {
+    items.value = {
+      ...items.value,
+      [item.id]: item,
+    }
+    saveToStorage()
+  }
+
   function remove(id: number) {
     const { [id]: _, ...rest } = items.value
     items.value = rest
@@ -56,12 +68,18 @@ export const useFavStore = defineStore('favStore', () => {
     return items.value[id]
   }
 
+  function has(id:number):boolean{
+    return id in items.value
+  }
+
   loadFromStorage()
 
   return {
     items,
     setStatus,
+    saveFavorite,
     remove,
     getById,
+    has,
   }
 })

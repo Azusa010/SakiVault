@@ -10,6 +10,24 @@
           <div class="nickname">{{ authStore.user.nickname }}</div>
           <div class="username">@{{ authStore.user.username }}</div>
         </div>
+
+        <!-- 同步区域 -->
+        <div class="sync-section">
+          <button class="btn btn-primary" @click="handleSync" :disabled="syncStore.isSyncing">
+            {{ syncStore.isSyncing ? '同步中...' : '同步Bangumi收藏' }}
+          </button>
+
+          <div v-if="syncStore.lastSyncAt">上次同步:{{ formatTime(syncStore.lastSyncAt) }}</div>
+        </div>
+
+        <div v-if="hasStats" class="sync-stats">
+          <span>拉取 {{ syncStore.stats.pulled }}</span>
+          <span>推送 {{ syncStore.stats.pushed }}</span>
+          <span v-if="syncStore.stats.conflicts">待推送 {{ syncStore.stats.conflicts }}</span>
+        </div>
+
+        <p v-if="syncStore.syncError" class="error">{{syncStore.syncError}}</p>
+
         <button class="btn btn-danger" @click="handleLogout">登出</button>
       </div>
 
@@ -33,10 +51,12 @@
 </template>
 
 <script setup lang="ts" name="LoginView">
-import { ref } from 'vue'
+import { computed, ref } from 'vue'
 import { useAuthStore } from '@/stores/authStore'
+import { useSyncStore } from '@/stores/syncStore'
 
 const authStore = useAuthStore()
+const syncStore = useSyncStore()
 
 const tokenInput = ref('')
 const isLoading = ref(false)
@@ -69,6 +89,22 @@ function handleLogout() {
   authStore.logout()
   tokenInput.value = ''
   error.value = ''
+}
+
+const hasStats = computed(()=>{
+  const {pulled,pushed,conflicts} = syncStore.stats
+  return pulled > 0 || pushed > 0 || conflicts > 0
+})
+
+// 同步收藏
+async function handleSync() {
+  try {
+    await syncStore.sync()
+  } catch {}
+}
+
+function formatTime(timestamp: number) {
+  return new Date(timestamp).toLocaleString()
 }
 </script>
 
@@ -175,6 +211,29 @@ function handleLogout() {
 }
 .username {
   color: rgba(255, 255, 255, 0.6);
+  font-size: 0.9rem;
+}
+
+
+/* 同步区域样式 */
+.sync-section {
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--space-sm);
+  padding: var(--space-md) 0;
+  border-top: 1px solid rgba(255, 255, 255, 0.08);
+  border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+}
+.sync-meta {
+  color: rgba(255, 255, 255, 0.5);
+  font-size: 0.85rem;
+}
+.sync-stats {
+  display: flex;
+  gap: var(--space-md);
+  color: rgba(255, 255, 255, 0.7);
   font-size: 0.9rem;
 }
 </style>

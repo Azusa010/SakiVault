@@ -4,22 +4,22 @@ import type { CollectionStatus, FavoriteAnimeSnapshot, FavoriteItem } from '@/ty
 
 export const STATUS_LABELS: Readonly<Record<CollectionStatus, string>> = {
   0: '未追',
-  1: '想看',
-  2: '看过',
-  3: '在看',
-  4: '搁置',
-  5: '抛弃',
+  want: '想看',
+  watched: '看过',
+  watching: '在看',
+  onhold: '搁置',
+  dropped: '抛弃',
 }
 
 // 下拉菜单选项
-export const STATUS_OPTIONS: Readonly<{ value: CollectionStatus; label: string; icon: string }[]> =
+export const STATUS_OPTIONS: Readonly<{ value: (CollectionStatus | number); label: string; icon: string }[]> =
   [
     { value: 0, label: '未追', icon: 'icon-a-shoucang_quxiaoshoucang' },
-    { value: 1, label: '想看', icon: 'icon-shoucang' },
-    { value: 2, label: '看过', icon: 'icon-wancheng' },
-    { value: 3, label: '在看', icon: 'icon-bofang' },
-    { value: 4, label: '搁置', icon: 'icon-gezhi' },
-    { value: 5, label: '抛弃', icon: 'icon-paoqi' },
+    { value: 'want', label: '想看', icon: 'icon-shoucang' },
+    { value: 'watching', label: '在看', icon: 'icon-wancheng' },
+    { value: 'watched', label: '看过', icon: 'icon-bofang' },
+    { value: 'onhold', label: '搁置', icon: 'icon-gezhi' },
+    { value: 'dropped', label: '抛弃', icon: 'icon-paoqi' },
   ]
 
 export function useFavorites() {
@@ -32,12 +32,11 @@ export function useFavorites() {
   // 按收藏状态分组
   const groupedByStatus = computed<Record<CollectionStatus, FavoriteItem[]>>(() => {
     const groups: Record<CollectionStatus, FavoriteItem[]> = {
-      0: [],
-      1: [],
-      2: [],
-      3: [],
-      4: [],
-      5: [],
+      want: [],
+      watching: [],
+      watched: [],
+      onhold: [],
+      dropped: [],
     }
 
     for (const item of favorites.value) {

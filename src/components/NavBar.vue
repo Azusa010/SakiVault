@@ -103,7 +103,7 @@ const authStore = useAuthStore();
   transition: all 0.25s ease;
 }
 
-/* 下划线动画升级 */
+
 .nav-links a::after {
   content: '';
   position: absolute;
@@ -132,7 +132,6 @@ const authStore = useAuthStore();
   width: 100%;
 }
 
-/* 当前路由 */
 .nav-links a.router-link-active {
   color: var(--color-primary);
 }
@@ -212,7 +211,6 @@ const authStore = useAuthStore();
   transform: scale(0.96);
 }
 
-/* 去掉下划线 */
 .nav-login::after {
   display: none;
 }

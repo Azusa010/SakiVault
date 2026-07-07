@@ -39,7 +39,7 @@ describe('useFavorites',()=>{
     const { setFavoriteStatus,getStatus,isFavorited } = useFavorites()
     const anime = createAnime(1)
 
-    setFavoriteStatus(anime.id,1,anime)
+    setFavoriteStatus(anime.id,'want',anime)
 
     expect(isFavorited(1)).toBe(true)
     expect(getStatus(1)).toBe(1)
@@ -50,17 +50,17 @@ describe('useFavorites',()=>{
     const { setFavoriteStatus,getStatus } = useFavorites()
     const anime = createAnime(1)
 
-    setFavoriteStatus(anime.id,1,anime)
-    setFavoriteStatus(anime.id,3,anime)
-    expect(getStatus(1)).toBe(3)
+    setFavoriteStatus(anime.id,'want',anime)
+    setFavoriteStatus(anime.id,'watching',anime)
+    expect(getStatus(1)).toBe('watching')
   })
 
   it('状态设置为0时移除收藏',()=>{
     const {setFavoriteStatus,isFavorited} = useFavorites()
     const anime = createAnime(1)
 
-    setFavoriteStatus(anime.id,1,anime)
-    setFavoriteStatus(anime.id,0,anime)
+    setFavoriteStatus(anime.id,'want',anime)
+    setFavoriteStatus(anime.id,'dropped',anime)
 
     expect(isFavorited(1)).toBe(false)
   })
@@ -69,7 +69,7 @@ describe('useFavorites',()=>{
     const {setFavoriteStatus,isFavorited,removeFavorite}=useFavorites()
     const anime = createAnime(1)
 
-    setFavoriteStatus(anime.id,1,anime)
+    setFavoriteStatus(anime.id,'want',anime)
     removeFavorite(anime.id)
 
     expect(isFavorited(1)).toBe(false)
@@ -81,10 +81,10 @@ describe('useFavorites',()=>{
     const anime2 = createAnime(2)
 
     vi.setSystemTime(new Date('2000-01-01'))
-    setFavoriteStatus(anime1.id,1,anime1)
+    setFavoriteStatus(anime1.id,'want',anime1)
 
     vi.setSystemTime(new Date('2000-01-02'))
-    setFavoriteStatus(anime2.id,1,anime2)
+    setFavoriteStatus(anime2.id,'want',anime2)
 
     expect(favorites.value.map(item => item.id)).toEqual([2, 1])
 
@@ -97,16 +97,16 @@ describe('useFavorites',()=>{
     const anime2 = createAnime(2)
     const anime3 = createAnime(3)
 
-    setFavoriteStatus(anime1.id,1,anime1)
-    setFavoriteStatus(anime2.id,3,anime2)
-    setFavoriteStatus(anime3.id,1,anime3)
+    setFavoriteStatus(anime1.id,'want',anime1)
+    setFavoriteStatus(anime2.id,'watching',anime2)
+    setFavoriteStatus(anime3.id,'want',anime3)
 
-    expect(groupedByStatus.value[1]).toHaveLength(2)
-    expect(groupedByStatus.value[3]).toHaveLength(1)
+    expect(groupedByStatus.value['want']).toHaveLength(2)
+    expect(groupedByStatus.value['watching']).toHaveLength(1)
   })
   it('STATUS_LABELS和STATUS_OPTIONS保持一致',()=>{
     for (const option of STATUS_OPTIONS){
-      expect(STATUS_LABELS[option.value]).toBe(option.label)
+      expect(STATUS_LABELS[option.value as keyof typeof STATUS_LABELS]).toBe(option.label)
     }
   })
 })

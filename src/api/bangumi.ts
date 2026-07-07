@@ -319,7 +319,7 @@ export async function updateUserCollection(subject_id:number,payload:{
   private?:boolean,
   tags?:string[],
 }){
-  const response = await bangumiClient.put(`v0/users/-/collections/${subject_id}`, payload)
+  const response = await bangumiClient.post(`v0/users/-/collections/${subject_id}`, payload)
   return response.data
 }
 
