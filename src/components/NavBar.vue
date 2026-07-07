@@ -182,29 +182,27 @@ const authStore = useAuthStore();
 
 
 .nav-login {
-  padding: 8px 18px;
-
-  border-radius: 999px;
-
+  box-sizing: border-box;
+  min-width: 50px;
+  text-align: center;
+  padding: 6px 28px;
+  border-radius: 9999px;
   background: linear-gradient(
     135deg,
     #ff6b8b,
     #ff8fa3
   );
-
   color: #fff !important;
-
   font-weight: 600;
-  font-size: 0.95rem;
-
-  box-shadow: 0 6px 18px rgba(255, 107, 139, 0.35);
-
+  font-size: 0.9rem;
+  letter-spacing: 0.02em;
+  box-shadow: 0 4px 14px rgba(255, 107, 139, 0.35);
   transition: all 0.25s ease;
 }
 
 .nav-login:hover {
-  transform: translateY(-1px) scale(1.03);
-  box-shadow: 0 10px 26px rgba(255, 107, 139, 0.45);
+  transform: translateY(-2px) scale(1.03);
+  box-shadow: 0 8px 22px rgba(255, 107, 139, 0.45);
 }
 
 .nav-login:active {

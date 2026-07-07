@@ -88,7 +88,7 @@ const init = () => {
   window.addEventListener('resize', resize)
 
   petals = []
-  for (let i = 0; i < 60; i++) {
+  for (let i = 0; i < 40; i++) {
     petals.push(new Petal(c.width, c.height))
   }
 

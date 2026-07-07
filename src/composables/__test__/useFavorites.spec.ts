@@ -26,11 +26,11 @@ describe('useFavorites',()=>{
     expect(favorites.value).toHaveLength(0)
     expect(groupedByStatus.value).toEqual({
       0: [],
-      1: [],
-      2: [],
-      3: [],
-      4: [],
-      5: [],
+      'dropped': [],
+      'onhold': [],
+      'watched': [],
+      'watching': [],
+      'want': []
     })
 
   })
@@ -42,7 +42,7 @@ describe('useFavorites',()=>{
     setFavoriteStatus(anime.id,'want',anime)
 
     expect(isFavorited(1)).toBe(true)
-    expect(getStatus(1)).toBe(1)
+    expect(getStatus(1)).toBe('want')
     expect(localStorage.getItem('saki-favorites')).toContain(JSON.stringify(anime))
   })
 
@@ -60,7 +60,7 @@ describe('useFavorites',()=>{
     const anime = createAnime(1)
 
     setFavoriteStatus(anime.id,'want',anime)
-    setFavoriteStatus(anime.id,'dropped',anime)
+    setFavoriteStatus(anime.id,0,anime)
 
     expect(isFavorited(1)).toBe(false)
   })
