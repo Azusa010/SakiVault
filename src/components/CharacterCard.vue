@@ -183,4 +183,25 @@ const birthday = computed(() => {
   color: rgba(255, 255, 255, 0.8);
   font-size: 14px;
 }
+
+@media (max-width: 768px) {
+  .character-card {
+    align-items: center;
+    text-align: center;
+  }
+
+  .character-card-img {
+    width: 80px;
+    aspect-ratio: 3/4;
+  }
+  .name,
+  .sex,
+  .birthday,
+  .cv {
+    display: block;
+    text-align:start;
+  }
+
+
+}
 </style>

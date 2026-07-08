@@ -116,6 +116,7 @@ onMounted(async () => {
     const [current, popular] = await Promise.all([getHotSubjects(), getPopularAnime(12)])
     currentSeasonAnime.value = current
     popularAnime.value = popular
+
   } catch (error) {
     console.error(error)
     popularError.value = '获取数据失败'

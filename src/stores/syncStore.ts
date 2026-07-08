@@ -50,7 +50,7 @@ export const useSyncStore = defineStore('sync', () => {
   // isSyncing: 是否正在同步
   const isSyncing = ref(false)
   // lastSyncAt: 上次成功同步的时间戳
-  const lastSyncAt = ref<number | null>(null)
+  const lastSyncAt = ref<number | null>(localStorage.getItem('lastSyncAt') ? parseInt(localStorage.getItem('lastSyncAt')!) : null)
   // syncError: 同步错误信息
   const syncError = ref<string | null>(null)
   // syncStats: 同步统计信息
@@ -188,6 +188,7 @@ export const useSyncStore = defineStore('sync', () => {
       await pullCollections()
       await pushCollections()
       lastSyncAt.value = Date.now()
+      localStorage.setItem('lastSyncAt', lastSyncAt.value.toString())
     } catch (err) {
       syncError.value = err instanceof Error ? err.message : String(err)
       throw err

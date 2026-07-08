@@ -8,6 +8,7 @@
       <div class="meta">
         <span v-if="anime.averageScore" class="score">{{ anime.averageScore }}分</span>
         <span v-if="anime.rank">#{{ anime.rank }}</span>
+        <span v-if="anime.episodes">{{ anime.episodes }}集</span>
       </div>
     </div>
   </RouterLink>

@@ -23,7 +23,7 @@ interface BangumiSearchResult {
   name:string,
   name_cn?:string,
   eps?:number,
-  rating?:{score?:number},
+  rating?:{score?:number, rank?:number},
 }
 
 const bangumiClient = axios.create({
@@ -142,13 +142,14 @@ export async function getHotSubjects(limit = 30){
     }
   })
 
-  return response.data.data.map((item:{count:number,subject:{id:number,name_cn?:string,name:string,rating?:{score?:number,rank?:number},eps?:number}}) => ({
+  return response.data.data.map((item:{count:number,subject:{id:number,nameCN?:string,name:string,rating?:{score?:number,rank?:number},eps?:number}}) => ({
     id: item.subject.id,
-    title: item.subject.name_cn || item.subject.name,
+    title: item.subject.nameCN || item.subject.name,
     coverImage: getAnimeImageUrl(item.subject.id, 'large'),
     averageScore: item.subject.rating?.score?.toFixed(1),
     rank: item.subject?.rating?.rank,
   }))
+
 }
 
 
@@ -261,6 +262,7 @@ export async function searchSubjects(params: SearchSubjectParmas) {
       title: item.name_cn || item.name,
       coverImage: getAnimeImageUrl(item.id, 'large'),
       averageScore: item.rating?.score,
+      rank: item.rating?.rank,
       episodes: item.eps,
     }
   })

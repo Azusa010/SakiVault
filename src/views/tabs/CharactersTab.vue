@@ -17,7 +17,18 @@ import { getCharactersById } from '@/api/bangumi'
 import CharacterCard from '@/components/CharacterCard.vue'
 import CharacterDetailSheet from '@/components/CharacterDetailSheet.vue'
 const props = defineProps<{ anime: { id: number } }>()
-const selectedCharacter = ref<any>(null)
+const selectedCharacter = ref<{
+  name: string
+  gender: string
+  birth_year: number | null
+  birth_mon: number | null
+  birth_day: number | null
+  images: {
+    medium: string
+  }
+  summary: string
+  infobox: { key: string; value: string | string[] }[]
+} | null>(null)
 const charactersIds = ref<{ actors: []; id: number; relation: string }[]>([])
 const loading = ref(false)
 const error = ref('')
@@ -67,5 +78,12 @@ const sortedCharacters = computed(() => {
   display: grid;
   grid-template-columns: repeat(3, 1fr);
   gap: 12px;
+}
+
+@media (max-width: 768px) {
+  .character-tab {
+    display: flex;
+    flex-direction: column;
+  }
 }
 </style>

@@ -10,6 +10,7 @@
     <div class="content">
       <!-- 信息卡片 -->
       <div class="info-card">
+        <h1 class="mobile-title">{{ anime.title }}</h1>
         <img :src="anime.coverImage" alt="Anime Cover" class="poster" />
         <div class="info-text">
           <h1 class="title">{{ anime.title }}</h1>
@@ -32,6 +33,7 @@
         </div>
         <RatingChart :rating="anime?.rating" class="rating-chart" />
       </div>
+      <div class="mobile-wrapper-spacer"></div>
       <div class="follor-wrapper" ref="folloWrapperRef">
         <button class="fav-btn" @click="clickBtn($event)" ref="btnRef">
           <span
@@ -251,4 +253,101 @@ function clickBtn(e: MouseEvent) {
 }
 </script>
 
-<style scoped></style>
+<style scoped>
+@media (max-width: 1232px) {
+  .rating-chart {
+    display: none;
+  }
+}
+
+@media (max-width: 768px) {
+  .rating-chart {
+    display: none;
+  }
+
+  .banner {
+    top: 64px;
+    height: 200px;
+  }
+
+  .content {
+    padding: 16px;
+    margin-top: 120px;
+  }
+  .poster {
+    width: 120px;
+    height: 180px;
+    transform: scale(1.05);
+  }
+
+  .info-card {
+    padding: 0;
+    display: grid;
+    grid-template-columns: repeat(2,1fr);
+    width: 296px;
+    gap: 16px;
+  }
+
+  .episodesBox span,
+  .dateBox span {
+    font-size: 1rem !important;
+  }
+
+  .follor-wrapper {
+    position: relative;
+    width: 126px;
+    margin-left: 0;
+    top: 0;
+    left: 0;
+  }
+
+  .dropdown-menu {
+    position: absolute;
+  }
+
+  .mobile-wrapper-spacer {
+    display: block;
+    height: 35px;
+  }
+
+  .fav-btn,
+  .dropdown-menu {
+    width: 100%;
+  }
+
+  .tab-nav {
+    width: 100%;
+    margin: 32px 0 0;
+    justify-content: space-evenly;
+    gap: 24px;
+    overflow-x: auto;
+    overflow-y: hidden;
+    padding: 0 16px 12px;
+    white-space: nowrap;
+  }
+
+  .tab-nav::-webkit-scrollbar {
+    display: none;
+  }
+
+  .tab-item {
+    flex: 0 0 auto;
+    font-size: 0.95rem;
+  }
+
+  .title {
+    display: none;
+  }
+
+  .mobile-title {
+    position: relative;
+    display: block;
+    font-size: 1.5rem;
+    grid-column: 1 / -1;
+    font-weight: 700;
+    color: var(--text-main);
+    margin-bottom: var(--space-md);
+  }
+
+}
+</style>

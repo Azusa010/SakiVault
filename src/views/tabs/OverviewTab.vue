@@ -17,7 +17,10 @@
 
 <script setup lang="ts" name="">
 defineProps<{
-  anime: any
+  anime: {
+    summary: string;
+    tags: { name: string; count: number }[];
+  };
 }>()
 </script>
 
@@ -139,5 +142,16 @@ defineProps<{
 .tag-count {
   color: var(--color-primary);
   margin-left: 6px;
+}
+
+@media (max-width:768px) {
+  .w {
+    padding: 0 16px;
+  }
+
+  .overview-tab {
+    flex-direction: column;
+    gap: 0;
+  }
 }
 </style>

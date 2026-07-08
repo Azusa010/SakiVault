@@ -238,11 +238,12 @@
 }
 
 .follor-wrapper {
+  position: absolute;
+  display: inline-block;
+  z-index: 2;
   width: 110px;
   top: 158px;
   left: 25px;
-  position: absolute;
-  display: inline-block;
   margin-left: 340px;
 }
 
@@ -368,6 +369,14 @@
   opacity: 1;
   transform: translate(0, 0);
   animation: animate 0.5s ease-in-out forwards;
+}
+
+.mobile-wrapper-spacer {
+  display: none;
+}
+
+.mobile-title {
+  display: none;
 }
 
 @keyframes animate {

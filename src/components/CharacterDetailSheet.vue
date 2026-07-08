@@ -1,6 +1,6 @@
 <template>
   <Transition name="sheet">
-    <div v-if="character" class="sheet-overlay" style="padding: 0 150px" @click.self="close">
+    <div v-if="character" class="sheet-overlay" @click.self="close">
       <div class="sheet">
         <div class="sheet-header">
           <div class="sheet-handle" />
@@ -113,12 +113,13 @@ function formatValue(value: string | string[] | Array<{ k: string; v: string } |
       if (item && typeof item === 'object') return `${item.k}: ${item.v}`
       return String(item)
     })
-    .join(' / ')
+    .join(`\n`)
 }
 </script>
 
 <style scoped>
 .sheet-overlay {
+  padding: 0 150px;
   position: fixed;
   inset: 0;
   background: rgba(0, 0, 0, 0.6);
@@ -170,6 +171,7 @@ function formatValue(value: string | string[] | Array<{ k: string; v: string } |
   flex: 1;
   overflow-y: auto;
   padding: 0 20px 24px;
+  overscroll-behavior: contain;
 }
 
 .sheet-hero {
@@ -216,9 +218,10 @@ function formatValue(value: string | string[] | Array<{ k: string; v: string } |
 }
 
 .summary p {
-  color: var(--text-muted);
+  color: var(--text-main);
   line-height: 1.7;
   margin: 0 0 12px;
+  font-weight: 300;
 }
 
 .infobox dl {
@@ -243,6 +246,8 @@ function formatValue(value: string | string[] | Array<{ k: string; v: string } |
   margin: 0;
   color: var(--text-main);
   line-height: 1.5;
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
 }
 
 .sheet-enter-active,
@@ -263,5 +268,91 @@ function formatValue(value: string | string[] | Array<{ k: string; v: string } |
 .sheet-enter-from .sheet,
 .sheet-leave-to .sheet {
   transform: translateY(100%);
+}
+
+@media (max-width: 768px) {
+  .sheet-overlay {
+    padding: 0 16px;
+    align-items: flex-end;
+  }
+  .sheet {
+    height: min(72vh, 720px);
+  }
+
+  .sheet-header {
+    padding: 10px 12px;
+  }
+
+  .sheet-close {
+    top: 10px;
+    right: 12px;
+  }
+
+  .sheet-body {
+    padding: 0 16px 20px;
+  }
+
+  .sheet-hero {
+    align-items: flex-start;
+    gap: 12px;
+    margin-bottom: 20px;
+  }
+
+  .sheet-hero img {
+    width: 96px;
+    border-radius: 10px;
+    flex-shrink: 0;
+  }
+
+  .sheet-title {
+    min-width: 0;
+    flex: 1;
+  }
+
+  .sheet-title h2 {
+    max-width: 80%;
+    font-size: 20px;
+    line-height: 1.3;
+    word-break: break-all;
+  }
+  .original-name {
+    margin: 4px 0 10px;
+    font-size: 0.9rem;
+  }
+
+  .meta {
+    gap: 6px;
+    font-size: 0.88rem;
+  }
+
+  .section {
+    margin-bottom: 20px;
+  }
+
+  .section h3 {
+    font-size: 15px;
+    margin-bottom: 10px;
+  }
+
+  .summary p {
+    line-height: 1.65;
+    font-size: 0.92rem;
+  }
+
+  .info-row {
+    flex-direction: column;
+    gap: 4px;
+    padding: 10px 0;
+  }
+
+  .info-row dt {
+    width: auto;
+    font-size: 13px;
+  }
+
+  .info-row dd {
+    white-space: pre-line;
+    overflow-wrap: anywhere;
+  }
 }
 </style>
