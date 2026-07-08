@@ -1,6 +1,7 @@
 <template>
   <div class="app">
     <NavBar />
+    <MusicPlayer></MusicPlayer>
     <main class="main-content">
       <PearBlossom></PearBlossom>
       <MouseEffect></MouseEffect>
@@ -14,6 +15,7 @@
 </template>
 
 <script setup lang="ts" name="">
+import MusicPlayer from './components/MusicPlayer.vue';
 import NavBar from './components/NavBar.vue'
 import { RouterView } from 'vue-router'
 import PearBlossom from '@/components/PearBlossom.vue'

@@ -1,5 +1,5 @@
 import axios from 'axios'
-import type { Music, MusicUrl } from '@/types/music'
+import type { Music, MusicUrl, MatchUrlResponse } from '@/types/music'
 
 // 歌手
 interface NeteaseArtist {
@@ -10,7 +10,7 @@ interface NeteaseArtist {
 
 // 专辑
 interface NeteaseAlbum {
-  picId?: number
+  picid?: number
   id: number
   name: string
 }
@@ -45,6 +45,14 @@ interface NeteaseDetailSong {
 interface NeteaseSongUrl {
   id: number
   url: string | null
+  fee?: number
+  freeTrialInfo?: unknown
+  freeTrialPrivilege?: {
+    resConsumable: boolean
+    userConsumable: boolean
+    type?: number
+    remainTime?: number
+  }
 }
 
 const musicClient = axios.create({
@@ -81,10 +89,10 @@ function normalizeMusic(song: NeteaseSong, detail?: NeteaseDetailSong): Music {
       img1v1Url: artist.img1v1Url || '',
     })),
     album: {
-      picId: detailAlbum?.picid || searchAlbum.picId,
+      picId: detailAlbum?.picid || searchAlbum?.picid,
       imglvUrl: coverUrl,
-      name: detailAlbum?.name || searchAlbum.name || '未知专辑',
-      id: detailAlbum?.id || searchAlbum.id,
+      name: detailAlbum?.name || searchAlbum?.name || '未知专辑',
+      id: detailAlbum?.id || searchAlbum?.id,
     },
     coverUrl,
     duration: song.duration || song.dt || 0,
@@ -106,18 +114,73 @@ export async function searchMusic(keywords: string): Promise<Music[]> {
   return songs.map((song) => normalizeMusic(song, detailMap.get(String(song.id))))
 }
 
+// 判断是否为试听
+function isPreviewMusicUrl(item?: NeteaseSongUrl): boolean {
+  if (!item) return false
+  return Boolean(item.freeTrialInfo)
+}
+
+const UNBLOCK_SOURCES = ['kuwo', 'kugou', 'migu','pyncmd']
+// 通过解灰接口获得备用url
+async function getMatchedUrl(id: string) {
+  for (const source of UNBLOCK_SOURCES) {
+    try {
+      const response = await musicClient.get<MatchUrlResponse>('/song/url/match', {
+        params: {
+          id,
+          source,
+          unblock: true,
+        },
+      })
+
+      const data = response.data as MatchUrlResponse
+      console.log(`[music] 解灰结果: ${source}`, data)
+      const url = data.proxyUrl || data.data
+
+      if (data.code === 200 && url) {
+        return url
+      }
+    } catch (err) {
+      console.warn(`[music] 解灰失败: ${source}`, err)
+    }
+  }
+  return null
+}
+
 // 获取音乐url
 export async function getMusicUrl(music: Music): Promise<MusicUrl> {
-  const response = await musicClient.get('/song/url', {
+  const response = await musicClient.get('/song/url/v1', {
     params: {
       id: music.id,
+      level: 'exhigh',
     },
   })
 
-  const item = response.data.data[0] as NeteaseSongUrl | undefined
+  const item = response.data.data?.[0] as NeteaseSongUrl | undefined
+  // 如果没有url，尝试解灰
+  if (!item?.url) {
+    const matchedUrl = await getMatchedUrl(music.id)
+    return {
+      id: music.id,
+      source: music.source,
+      url: matchedUrl,
+    }
+  }
+  // 如果是试听，尝试解灰
+  if (isPreviewMusicUrl(item)) {
+    const matchedUrl = await getMatchedUrl(music.id)
+    return {
+      id: music.id,
+      source: music.source,
+      url: matchedUrl || item.url,
+      isPreview: !matchedUrl,
+    }
+  }
+  // 如果有url，直接返回
   return {
     id: music.id,
     source: music.source,
-    url: item?.url || null,
+    url: item.url,
+    isPreview: false,
   }
 }

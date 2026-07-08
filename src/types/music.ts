@@ -4,17 +4,15 @@ export type MusicSource =
   | 'qq'
   | 'kugou'
   | 'kuwo'
+  | 'bodian'
   | 'migu'
-  | 'bilibili'
-  | 'xiami'
   | 'joox'
-  | 'baidu'
   | 'youtube'
-  | 'spotify'
-  | 'soundcloud'
-  | 'applemusic'
-  | 'deezer'
-  | 'tidal'
+  | 'youtubedl'
+  | 'ytdlp'
+  | 'bilibili'
+  | 'bilivideo'
+  | 'pyncmd'
 
 // 音乐信息
 export interface Music {
@@ -37,4 +35,13 @@ export interface MusicUrl {
   id: string
   source?: MusicSource
   url: string | null
+  isPreview?: boolean
+  proxyUrl?: string
+}
+
+// 解灰接口返回结构
+export interface MatchUrlResponse {
+  code: number
+  data?: string
+  proxyUrl?: string
 }
