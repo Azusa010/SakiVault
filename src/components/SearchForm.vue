@@ -21,14 +21,16 @@
     <div class="mobile-filter-bar">
       <button type="button" @click="toggleFilters" class="mobile-filter-trigger">
         <span>筛选</span>
-        <span class="mobile-filter-count" v-if="year || rating || (tags && tags.length)">已选</span>
       </button>
 
       <!-- 已选 -->
       <div v-if="year || rating || (tags && tags.length)" class="mobile-filter-summary">
+        <span class="mobile-filter-trigger-count" v-if="year || rating || (tags && tags.length)"
+          >已选</span
+        >
         <span v-if="year">年份:{{ year }}</span>
         <span v-if="rating">评分:{{ rating }}</span>
-        <span v-if="tags && tags.length">   tags:</span>
+        <span v-if="tags && tags.length"> tags:</span>
         <span v-for="tag in tags" :key="tag">{{ tag }}</span>
       </div>
     </div>
@@ -375,7 +377,6 @@ function closeFilters() {
 .mobile-filter-trigger-count {
   margin-left: 6px;
   color: var(--color-primary);
-  font-size: 0.82rem;
 }
 
 .mobile-filter-summary {
@@ -406,13 +407,7 @@ function closeFilters() {
   .search-box {
     padding: 12px 14px;
   }
-  .filters {
-    gap: var(--space-sm);
-    padding: var(--space-md);
-    border-radius: var(--radius-md);
-    background-color: rgba(255, 255, 255, 0.03);
-    border: 1px solid rgba(255, 255, 255, 0.04);
-  }
+
   .filter-row {
     flex-direction: column;
     align-items: stretch;
@@ -455,11 +450,31 @@ function closeFilters() {
   }
 
   .filters {
-    display: none;
+    gap: var(--space-sm);
+    padding: var(--space-md);
+    border-radius: var(--radius-md);
+    background-color: rgba(255, 255, 255, 0.03);
+    border: 1px solid rgba(255, 255, 255, 0.04);
+    max-height: 0;
+    opacity: 0;
+    overflow: hidden;
+    padding-top: 0;
+    padding-bottom: 0;
+    transform: translateY(-8px);
+    pointer-events: none;
+    transition:
+      max-height 260ms ease,
+      opacity 180ms ease,
+      transform 220ms ease,
+      padding 220ms ease;
   }
 
   .filters.is-mobile-open {
-    display: flex;
+    max-height: 520px;
+    opacity: 1;
+    padding: var(--space-md);
+    transform: translateY(0);
+    pointer-events: auto;
   }
 }
 </style>
