@@ -56,7 +56,7 @@
 </template>
 
 <script setup lang="ts">
-import { ref, computed, nextTick } from 'vue'
+import { ref, computed, nextTick,onMounted,onUnmounted } from 'vue'
 import { STATUS_OPTIONS, useFavorites, STATUS_LABELS } from '@/composables/useFavorites'
 import type { CollectionStatus, FavoriteItem } from '@/types/favorite'
 import { RouterLink } from 'vue-router'
@@ -174,8 +174,14 @@ function updateItemWidth() {
 }
 
 // 初始化与响应式更新
-nextTick(updateItemWidth)
-window.addEventListener('resize', updateItemWidth)
+onMounted(() => {
+  nextTick(() => updateItemWidth())
+  window.addEventListener('resize', updateItemWidth)
+})
+
+onUnmounted(() => {
+  window.removeEventListener('resize', updateItemWidth)
+})
 </script>
 
 <style scoped>

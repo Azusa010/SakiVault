@@ -92,30 +92,11 @@ import RatingChart from '@/components/RatingChar.vue'
 import '@/assets/styles/DetailView.css'
 import { useFavorites, STATUS_LABELS, STATUS_OPTIONS } from '@/composables/useFavorites'
 import type { CollectionStatus } from '@/types/favorite'
+import type { Anime } from '@/types/anime'
 
 const route = useRoute()
 const id = Number(route.params.id)
-interface Anime {
-  id: number
-  title: string
-  coverImage: string
-  averageScore: number
-  episodes: number
-  summary: string
-  date: string
-  tags: string[]
-  infobox: Array<{ key: string } | null | undefined>
-  rating: { count: Record<string, number> }
-  meta_tags: string[]
-  current_episodes: number
-  collection: {
-    on_hold: number
-    dropped: number
-    wish: number
-    collect: number
-    doing: number
-  }
-}
+
 const anime = ref<Anime | null>(null)
 const count = ref(0)
 onMounted(async () => {

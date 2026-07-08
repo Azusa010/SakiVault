@@ -1,6 +1,5 @@
 import axios from 'axios'
 
-
 interface BangumiCollection {
   on_hold?: number
   dropped?: number
@@ -19,11 +18,11 @@ interface BangumiSubject {
 }
 
 interface BangumiSearchResult {
-  id:number,
-  name:string,
-  name_cn?:string,
-  eps?:number,
-  rating?:{score?:number, rank?:number},
+  id: number
+  name: string
+  name_cn?: string
+  eps?: number
+  rating?: { score?: number; rank?: number }
 }
 
 const bangumiClient = axios.create({
@@ -58,14 +57,13 @@ export async function getAnimeCurrentEpisodes(id: number): Promise<number> {
       params: { subject_id: id, type: 0 }, // 0 表示本篇
     })
     const episodes = response.data.data || []
-    const today: (string|undefined) = new Date().toISOString().split('T')[0]
-    if(today === undefined) return 0
+    const today: string | undefined = new Date().toISOString().split('T')[0]
+    if (today === undefined) return 0
     return episodes.filter((ep: { airdate: string }) => ep.airdate < today).length
   } catch {
     return 0
   }
 }
-
 
 // 获取最受欢迎的番剧列表
 export async function getPopularAnime(limit = 10) {
@@ -73,13 +71,21 @@ export async function getPopularAnime(limit = 10) {
     params: { type: 2, sort: 'rank', limit },
   })
 
-  return response.data.data.map((item: { id: number; name_cn?: string; name: string; rating?: { score?: number }; eps?: number }) => ({
-    id: item.id,
-    title: item.name_cn || item.name,
-    coverImage: getAnimeImageUrl(item.id, 'large'),
-    averageScore: item.rating?.score,
-    episodes: item.eps,
-  }))
+  return response.data.data.map(
+    (item: {
+      id: number
+      name_cn?: string
+      name: string
+      rating?: { score?: number }
+      eps?: number
+    }) => ({
+      id: item.id,
+      title: item.name_cn || item.name,
+      coverImage: getAnimeImageUrl(item.id, 'large'),
+      averageScore: item.rating?.score,
+      episodes: item.eps,
+    }),
+  )
 }
 
 // 合并 rank 和 date 两个维度的近期番剧，按 collection 热度分排序
@@ -134,24 +140,37 @@ export async function getRecentPopularAnime(limit = 30) {
 }
 
 // 获得热门条目
-export async function getHotSubjects(limit = 30){
+export async function getHotSubjects(limit = 30) {
   const response = await bangumiPrivateClient.get('/trending/subjects', {
-    params:{
+    params: {
       type: 2,
       limit,
-    }
+    },
   })
 
-  return response.data.data.map((item:{count:number,subject:{id:number,nameCN?:string,name:string,rating?:{score?:number,rank?:number},eps?:number}}) => ({
-    id: item.subject.id,
-    title: item.subject.nameCN || item.subject.name,
-    coverImage: getAnimeImageUrl(item.subject.id, 'large'),
-    averageScore: item.subject.rating?.score?.toFixed(1),
-    rank: item.subject?.rating?.rank,
-  }))
+  return response.data.data.map(
+    (item: {
+      count: number
+      subject: {
+        id: number
+        nameCN?: string
+        name: string
+        rating?: { score?: number; rank?: number }
+        eps?: number
+      }
+    }) => {
+      const score = item.subject.rating?.score
+      return {
+        id: item.subject.id,
+        title: item.subject.nameCN || item.subject.name,
+        coverImage: getAnimeImageUrl(item.subject.id, 'large'),
+        averageScore: score !== undefined ? Number(score.toFixed(1)) : undefined,
+        rank: item.subject?.rating?.rank,
 
+      }
+    },
+  )
 }
-
 
 // 获得番剧的详细信息
 export async function getAnimeById(id: number) {
@@ -229,7 +248,7 @@ interface SearchSubjectParmas {
 // 搜索番剧
 export async function searchSubjects(params: SearchSubjectParmas) {
   const { keyword, year, rating, tags, limit = 20, offset = 0 } = params
-  const filter: Record<string, number | string[] | string|number[]> = {
+  const filter: Record<string, number | string[] | string | number[]> = {
     type: [2],
   }
   if (year === 'earlier') {
@@ -268,69 +287,73 @@ export async function searchSubjects(params: SearchSubjectParmas) {
   })
 }
 
-
 // 登陆相关
-
 
 //Bangumi用户信息
 export interface BangumiUser {
-  username: string,
-  nickname: string,
-  avatar?:{
-    large?: string,
-    medium?: string,
-    small?: string,
-  },
-  id: number,
-  sign?:string,
+  username: string
+  nickname: string
+  avatar?: {
+    large?: string
+    medium?: string
+    small?: string
+  }
+  id: number
+  sign?: string
 }
 
 // 获取当前登陆用户信息
-export async function getCurrentUser():Promise<BangumiUser>{
+export async function getCurrentUser(): Promise<BangumiUser> {
   const response = await bangumiClient.get('/v0/me')
   return response.data
 }
 
 // 获得用户收藏条目
-export async function getUserCollections(username:string,parmas?:{
-  subject_type?:number,
-  type?:number,
-  limit?:number,
-  offset?:number,
-}){
-  const response = await bangumiClient.get(`/v0/users/${username}/collections`,{
+export async function getUserCollections(
+  username: string,
+  parmas?: {
+    subject_type?: number
+    type?: number
+    limit?: number
+    offset?: number
+  },
+) {
+  const response = await bangumiClient.get(`/v0/users/${username}/collections`, {
     params: {
-      subject_type:2,
-      ...parmas
-    }
+      subject_type: 2,
+      ...parmas,
+    },
   })
   return response.data
 }
 
 // 获得用户单个番剧收藏
-export async function getUserCollectionById(username:string,subject_id:number){
+export async function getUserCollectionById(username: string, subject_id: number) {
   const response = await bangumiClient.get(`/v0/users/${username}/collections/${subject_id}`)
   return response.data
 }
 
 // 新增或更新用户单个番剧收藏
-export async function updateUserCollection(subject_id:number,payload:{
-  type:number,
-  rate?:number,
-  ep_status?:number,
-  vol_status?:number,
-  comment?:string,
-  private?:boolean,
-  tags?:string[],
-}){
+export async function updateUserCollection(
+  subject_id: number,
+  payload: {
+    type: number
+    rate?: number
+    ep_status?: number
+    vol_status?: number
+    comment?: string
+    private?: boolean
+    tags?: string[]
+  },
+) {
   const response = await bangumiClient.post(`v0/users/-/collections/${subject_id}`, payload)
   return response.data
 }
 
 // 给 bugumiClient 注入token
-bangumiClient.interceptors.request.use((config)=>{
+bangumiClient.interceptors.request.use((config) => {
   const token = localStorage.getItem('bangumi-access-token')
-  if(token){
+  if (token) {
     config.headers.Authorization = `Bearer ${token}`
   }
   return config
