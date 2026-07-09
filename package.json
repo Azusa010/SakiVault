@@ -15,14 +15,21 @@
     "lint:oxlint": "oxlint . --fix",
     "lint:eslint": "eslint . --fix --cache",
     "format": "prettier --write --experimental-cli src/",
-    "build:vercel": "npm run build-only"
+    "build:vercel": "npm run build-only",
+    "server:dev": "tsx server/index.ts",
+    "dev:all": "run-p dev server:dev"
   },
   "dependencies": {
+    "@types/cors": "^2.8.19",
+    "@types/express": "^5.0.6",
     "@vercel/node": "^5.8.22",
     "@vueuse/core": "^14.3.0",
     "axios": "^1.18.1",
+    "cors": "^2.8.6",
+    "express": "^5.2.1",
     "https-proxy-agent": "^9.1.0",
     "pinia": "^3.0.4",
+    "tsx": "^4.23.0",
     "vue": "^3.5.38",
     "vue-router": "^5.1.0"
   },

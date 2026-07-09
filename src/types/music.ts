@@ -38,10 +38,3 @@ export interface MusicUrl {
   isPreview?: boolean
   proxyUrl?: string
 }
-
-// 解灰接口返回结构
-export interface MatchUrlResponse {
-  code: number
-  data?: string
-  proxyUrl?: string
-}
