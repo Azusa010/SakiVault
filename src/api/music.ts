@@ -41,19 +41,6 @@ interface NeteaseDetailSong {
   al?: NeteaseDetailAlbum
 }
 
-// 播放地址
-interface NeteaseSongUrl {
-  id: number
-  url: string | null
-  fee?: number
-  freeTrialInfo?: unknown
-  freeTrialPrivilege?: {
-    resConsumable: boolean
-    userConsumable: boolean
-    type?: number
-    remainTime?: number
-  }
-}
 
 const musicClient = axios.create({
   baseURL: 'http://localhost:3000',

@@ -1,6 +1,7 @@
 // 音乐来源
 export type MusicSource =
   | 'netease'
+  | 'lx'
   | 'qq'
   | 'kugou'
   | 'kuwo'
