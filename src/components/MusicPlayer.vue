@@ -89,8 +89,9 @@
 
   <!-- 音频常驻 -->
   <audio
-    :src="musicStore.currentUrl || undefined"
     ref="audioRef"
+    crossorigin="anonymous"
+    :src="musicStore.currentUrl || undefined"
     @loadedmetadata="handleLoadedMetadata"
     @timeupdate="handleTimeUpdate"
     @ended="handleEnded"
@@ -100,7 +101,16 @@
 
   <!-- 完整播放器 -->
   <Teleport to="body">
-    <section v-if="isPanelOpen" class="music-player">
+    <section
+      v-if="isPanelOpen"
+      class="music-player"
+      ref="playerPanelRef"
+      :style="{
+        '--cover-primary': coverPalette.primary,
+        '--cover-secondary': coverPalette.secondary,
+        '--cover-accent': coverPalette.accent,
+      }"
+    >
       <!-- 播放器头部 -->
       <header class="music-panel-header">
         <!-- 品牌标识 -->
@@ -228,33 +238,48 @@
 
             <!-- 播放列表 -->
             <div v-if="musicStore.playlist.length > 0" class="playlist-list">
-              <button
+              <div
                 v-for="(music, index) in musicStore.playlist"
                 :key="`${music.source}-${music.id}`"
-                type="button"
                 class="playlist-item"
                 :class="{ 'is-current': musicStore.currentIndex === index }"
-                @click="musicStore.play(music)"
               >
-                <img v-if="music.coverUrl" :src="music.coverUrl" alt="" class="playlist-cover" />
-                <img v-else src="../assets/pics/emptyCover.png" alt="" class="playlist-cover" />
+                <button type="button" class="playlist-item-main" @click="musicStore.play(music)">
+                  <img v-if="music.coverUrl" :src="music.coverUrl" alt="" class="playlist-cover" />
+                  <img v-else src="../assets/pics/emptyCover.png" alt="" class="playlist-cover" />
 
-                <span class="playlist-index">{{ String(index + 1).padStart(2, '0') }}</span>
+                  <span class="playlist-index">{{ String(index + 1).padStart(2, '0') }}</span>
 
-                <span class="playlist-text">
-                  <strong>{{ music.name }}</strong>
-                  <small>{{ formatArtists(music.artist) }}</small>
-                </span>
+                  <span class="playlist-text">
+                    <strong>{{ music.name }}</strong>
+                    <small>{{ formatArtists(music.artist) }}</small>
+                  </span>
 
-                <svg
-                  v-if="musicStore.currentIndex === index"
-                  class="playlist-playing-icon"
-                  viewBox="0 0 24 24"
-                  aria-label="当前播放"
+                  <svg
+                    v-if="musicStore.currentIndex === index"
+                    class="playlist-playing-icon"
+                    viewBox="0 0 24 24"
+                    aria-label="当前播放"
+                  >
+                    <path d="M5 9h3v6H5zM10.5 5h3v14h-3zM16 8h3v8h-3z" />
+                  </svg>
+                </button>
+
+                <button
+                  type="button"
+                  class="playlist-remove-btn"
+                  aria-label="从播放列表移出歌曲"
+                  @click="musicStore.removeFromPlaylist(music)"
                 >
-                  <path d="M5 9h3v6H5zM10.5 5h3v14h-3zM16 8h3v8h-3z" />
-                </svg>
-              </button>
+                  <svg viewBox="0 0 24 24" aria-hidden="true">
+                    <path d="M3 6h18" />
+                    <path d="M8 6V4h8v2" />
+                    <path d="m19 6-1 14H6L5 6" />
+                    <path d="M10 11v5" />
+                    <path d="M14 11v5" />
+                  </svg>
+                </button>
+              </div>
             </div>
 
             <p v-else class="playlist-empty">从搜索页添加音乐到播放队列</p>
@@ -388,22 +413,53 @@
 </template>
 
 <script setup lang="ts" name="MusicPlayer">
-import { nextTick, ref, watch } from 'vue'
+import { nextTick, ref, watch, onBeforeUnmount } from 'vue'
 import { useMusicStore } from '@/stores/musicStore'
 import type { Music } from '@/types/music'
 
 const musicStore = useMusicStore()
+
+onBeforeUnmount(() => {
+  stopAudioAnalysis()
+  void audioContext?.close()
+})
 
 function formatArtists(artists: Music['artist']): string {
   return artists.map((artist) => artist.name).join(' / ')
 }
 
 const audioRef = ref<HTMLAudioElement | null>(null)
+const playerPanelRef = ref<HTMLElement | null>(null)
 const isPlaying = ref(false)
 const currentTime = ref(0)
 const duration = ref(0)
 
 const volume = ref(0.8)
+
+// 频谱能量，动态背景用
+const bassLevel = ref(0)
+const midLevel = ref(0)
+const trebleLevel = ref(0)
+
+type CoverPalette = {
+  primary: string
+  secondary: string
+  accent: string
+}
+
+const defaultCoverPalette: CoverPalette = {
+  primary: '#7b5cff',
+  secondary: '#2878c9',
+  accent: '#42b99b',
+}
+
+const coverPalette = ref<CoverPalette>(defaultCoverPalette)
+let paletteRequestId = 0
+
+let audioContext: AudioContext | null = null
+let audioSourceNode: MediaElementAudioSourceNode | null = null
+let analyserNode: AnalyserNode | null = null
+let analysisFrameId: number | null = null
 
 // 完整播放器是否展开
 const isPanelOpen = ref(false)
@@ -446,12 +502,211 @@ function formatTime(time: number): string {
   return `${String(minutes).padStart(2, '0')}:${String(seconds).padStart(2, '0')}`
 }
 
+type RgbColor = {
+  red: number
+  green: number
+  blue: number
+}
+
+// 将RGB转换成十六进制颜色字符串
+function toHexColor({ red, green, blue }: RgbColor): string {
+  return `#${[red, green, blue].map((value) => value.toString(16).padStart(2, '0')).join('')}`
+}
+
+//判断两个候选色是否足够不同，避免颜色过于接近
+function getColorDistance(first: RgbColor, second: RgbColor): number {
+  return Math.hypot(first.red - second.red, first.green - second.green, first.blue - second.blue)
+}
+
+// 以匿名跨域模式加载封面，允许后续 Canvas 读取像素
+function loadCoverImage(url: string): Promise<HTMLImageElement> {
+  return new Promise((res, rej) => {
+    const image = new Image()
+    image.crossOrigin = 'anonymous'
+    image.onload = () => res(image)
+    image.onerror = () => rej(new Error('封面加载失败'))
+    image.src = url
+  })
+}
+
+// 从封面提取三个高饱和主色,失败返回默认色调
+async function extractCoverPalette(url: string): Promise<CoverPalette> {
+  try {
+    const image = await loadCoverImage(url)
+    const canvas = document.createElement('canvas')
+    const context = canvas.getContext('2d')
+
+    if (!context) return defaultCoverPalette
+
+    canvas.width = 32
+    canvas.height = 32
+    context.drawImage(image, 0, 0, canvas.width, canvas.height)
+
+    const pixels = context.getImageData(0, 0, canvas.width, canvas.height).data
+    const buckets = new Map<string, { color: RgbColor; count: number }>()
+
+    for (let index = 0; index < pixels.length; index += 16) {
+      const red = pixels[index] || 0
+      const green = pixels[index + 1] || 0
+      const blue = pixels[index + 2] || 0
+      const alpha = pixels[index + 3] || 0
+
+      const max = Math.max(red, green, blue)
+      const min = Math.min(red, green, blue)
+      const saturation = max === 0 ? 0 : (max - min) / max
+      if (alpha < 200 || max < 28 || max > 238 || saturation < 0.22) continue
+
+      const color = {
+        red: Math.floor(red / 32) * 32 + 16,
+        green: Math.floor(green / 32) * 32 + 16,
+        blue: Math.floor(blue / 32) * 32 + 16,
+      }
+
+      const key = `${color.red}-${color.green}-${color.blue}`
+
+      const bucket = buckets.get(key)
+
+      if (bucket) {
+        bucket.count += 1
+      } else {
+        buckets.set(key, { color, count: 1 })
+      }
+    }
+
+    const candidates = [...buckets.values()]
+      .sort((first, second) => second.count - first.count)
+      .map((bucket) => bucket.color)
+
+    const colors: RgbColor[] = []
+
+    for (const color of candidates) {
+      if (colors.every((selected) => getColorDistance(selected, color) > 72)) {
+        colors.push(color)
+      }
+      if (colors.length === 3) break
+    }
+
+    return {
+      primary: toHexColor(colors[0] || { red: 123, green: 92, blue: 255 }),
+      secondary: toHexColor(colors[1] || { red: 40, green: 120, blue: 201 }),
+      accent: toHexColor(colors[2] || { red: 66, green: 185, blue: 155 }),
+    }
+  } catch {
+    return defaultCoverPalette
+  }
+}
+
+// 计算指定频段的平局能量
+function getBandEnergy(data: Uint8Array, startFrequency: number, endFrequency: number): number {
+  if (!audioContext) return 0
+
+  const nyquistFrequency = audioContext.sampleRate / 2
+  const startIndex = Math.floor((startFrequency / nyquistFrequency) * data.length)
+  const endIndex = Math.min(data.length, Math.ceil((endFrequency / nyquistFrequency) * data.length))
+
+  let total = 0
+  for (let index = startIndex; index < endIndex; index++) {
+    total += data[index] || 0
+  }
+  return total / Math.max(1, endIndex - startIndex) / 255
+}
+
+// 将实时频谱映射为CSS变量，避免每帧触发 Vue 组件重渲染
+function updatePanelAudioStyle() {
+  const panel = playerPanelRef.value
+  if (!panel) return
+
+  panel.style.setProperty('--cover-scale', `${1 + bassLevel.value * 0.12}`)
+  panel.style.setProperty('--cover-opacity', `${0.66 + bassLevel.value * 0.18}`)
+  panel.style.setProperty('--cover-blur', `${42 + bassLevel.value * 16}px`)
+  panel.style.setProperty('--cover-saturate', `${1.08 + midLevel.value * 0.42}`)
+  panel.style.setProperty('--cover-hue-shift', `${trebleLevel.value * 10}deg`)
+  panel.style.setProperty('--flow-duration', `${18 - midLevel.value * 8}s`)
+}
+
+// 暂停时回复背景的平静状态
+function resetPanelAudioStyle() {
+  const panel = playerPanelRef.value
+  if (!panel) return
+
+  panel.style.setProperty('--cover-scale', '1')
+  panel.style.setProperty('--cover-opacity', '0.64')
+  panel.style.setProperty('--cover-blur', '42px')
+  panel.style.setProperty('--cover-saturate', '1.08')
+  panel.style.setProperty('--cover-hue-shift', '0deg')
+  panel.style.setProperty('--flow-duration', '18s')
+}
+
+// 初始化音频分析节点
+function setupAudioAnalysis(): boolean {
+  const audio = audioRef.value
+  if (!audio) return false
+
+  if (audioContext && analyserNode) return true
+
+  audioContext = new AudioContext()
+  audioSourceNode = audioContext.createMediaElementSource(audio)
+  analyserNode = audioContext.createAnalyser()
+
+  analyserNode.fftSize = 512
+  analyserNode.smoothingTimeConstant = 0.78
+
+  audioSourceNode.connect(analyserNode)
+  analyserNode.connect(audioContext.destination)
+
+  return true
+}
+
+// 读取频谱，持续更新低中高频能量
+async function startAudioAnalysis() {
+  try {
+    if (!setupAudioAnalysis() || !audioContext || !analyserNode) return
+
+    await audioContext.resume()
+
+    if (analysisFrameId !== null) return
+    const frequencyData = new Uint8Array(analyserNode.frequencyBinCount)
+
+    const updateAnalysis = () => {
+      if (!analyserNode) return
+
+      analyserNode.getByteFrequencyData(frequencyData)
+
+      bassLevel.value = bassLevel.value * 0.7 + getBandEnergy(frequencyData, 20, 180) * 0.22
+      midLevel.value = midLevel.value * 0.78 + getBandEnergy(frequencyData, 180, 2000) * 0.22
+      trebleLevel.value = trebleLevel.value * 0.78 + getBandEnergy(frequencyData, 2000, 8000) * 0.22
+
+      updatePanelAudioStyle()
+      analysisFrameId = requestAnimationFrame(updateAnalysis)
+    }
+
+    updateAnalysis()
+  } catch (error) {
+    console.warn('[music]音频频谱初始化失败', error)
+  }
+}
+
+// 停止帧循环，避免内存泄漏
+function stopAudioAnalysis() {
+  if (analysisFrameId !== null) {
+    cancelAnimationFrame(analysisFrameId)
+    analysisFrameId = null
+  }
+
+  bassLevel.value = 0
+  midLevel.value = 0
+  trebleLevel.value = 0
+  resetPanelAudioStyle()
+}
+
 function handlePlay() {
   isPlaying.value = true
+  void startAudioAnalysis()
 }
 
 function handlePause() {
   isPlaying.value = false
+  stopAudioAnalysis()
 }
 
 // 播放/暂停 歌曲
@@ -494,6 +749,23 @@ async function handleEnded() {
   isPlaying.value = false
   await musicStore.playNext()
 }
+
+watch(
+  () => musicStore.currentMusic?.coverUrl,
+  async (coverUrl) => {
+    const requestId = ++paletteRequestId
+    if (!coverUrl) {
+      coverPalette.value = defaultCoverPalette
+      return
+    }
+    const palette = await extractCoverPalette(coverUrl)
+
+    if (requestId === paletteRequestId) {
+      coverPalette.value = palette
+    }
+  },
+  { immediate: true },
+)
 
 // 播放地址变化后,自动播放
 watch(
@@ -756,6 +1028,8 @@ watch(volume, (value) => {
   position: fixed;
   display: flex;
   flex-direction: column;
+  isolation: isolate;
+  background: #080b12;
   right: 0;
   top: 0;
   bottom: 0;
@@ -767,14 +1041,61 @@ watch(volume, (value) => {
   overscroll-behavior: contain;
   border: 1px solid rgba(168, 105, 255, 0.22);
   border-radius: 12px 0 0 12px;
-  background:
-    linear-gradient(160deg, rgba(18, 21, 32, 0.97), rgba(8, 10, 16, 0.95)), rgba(12, 14, 22, 0.96);
   box-shadow:
     0 26px 70px rgba(0, 0, 0, 0.52),
     0 0 38px rgba(137, 84, 255, 0.16);
   backdrop-filter: blur(22px);
   transform: none;
   animation: music-panel-in 0.22s ease both;
+}
+
+.music-player::before {
+  content: '';
+  position: absolute;
+  pointer-events: none;
+}
+
+.music-player::before {
+  inset: -36%;
+  z-index: 0;
+  background:
+    linear-gradient(128deg, var(--cover-primary) 0%, transparent 48%),
+    linear-gradient(236deg, var(--cover-secondary) 0%, transparent 54%),
+    linear-gradient(344deg, var(--cover-accent) 0%, transparent 48%);
+  background-size: 155% 155%;
+  background-position:
+    12% 18%,
+    82% 36%,
+    46% 88%;
+  filter: blur(var(--cover-blur, 42px)) saturate(var(--cover-saturate, 1.12))
+    hue-rotate(var(--cover-hue-shift, 0deg)) brightness(1.16);
+  opacity: var(--cover-opacity, 0.52);
+  transform: scale(var(--cover-scale, 1));
+  will-change: background-position, filter, opacity, transform;
+  animation: cover-color-flow var(--flow-duration, 18s) ease-in-out infinite alternate;
+}
+
+.music-panel-header,
+.music-panel-body,
+.music-panel-tabs {
+  position: relative;
+  z-index: 1;
+}
+
+@keyframes cover-color-flow {
+  from {
+    background-position:
+      12% 18%,
+      82% 36%,
+      46% 88%;
+  }
+
+  to {
+    background-position:
+      82% 70%,
+      18% 58%,
+      62% 12%;
+  }
 }
 
 .music-panel-header {
@@ -1255,17 +1576,11 @@ watch(volume, (value) => {
 .playlist-item {
   width: 100%;
   display: grid;
-  grid-template-columns: 38px 26px minmax(0, 1fr) 20px;
+  grid-template-columns: minmax(0, 1fr) 32px;
   align-items: center;
-  gap: 9px;
-  min-height: 54px;
-  padding: 7px;
-  border: 0;
+  gap: 4px;
+  padding: 4px;
   border-radius: 8px;
-  background: transparent;
-  color: var(--text-main);
-  text-align: left;
-  cursor: pointer;
   transition: background-color 0.18s ease;
 }
 
@@ -1275,6 +1590,59 @@ watch(volume, (value) => {
 
 .playlist-item.is-current {
   background: rgba(159, 93, 255, 0.14);
+}
+
+.playlist-item-main {
+  min-width: 0;
+  min-height: 54px;
+  display: grid;
+  grid-template-columns: 38px 26px minmax(0, 1fr) 20px;
+  align-items: center;
+  gap: 9px;
+  padding: 7px;
+  border: 0;
+  border-radius: 6px;
+  background: transparent;
+  color: var(--text-main);
+  text-align: left;
+  cursor: pointer;
+}
+
+.playlist-remove-btn {
+  width: 32px;
+  height: 32px;
+  display: grid;
+  place-items: center;
+  padding: 0;
+  border: 0;
+  border-radius: 50%;
+  background: transparent;
+  color: var(--text-disabled);
+  cursor: pointer;
+  transition:
+    background-color 0.18s ease,
+    color 0.18s ease;
+}
+
+.playlist-remove-btn:hover {
+  background: rgba(255, 107, 107, 0.14);
+  color: #ff7777;
+}
+
+.playlist-item-main:focus-visible,
+.playlist-remove-btn:focus-visible {
+  outline: 2px solid var(--color-primary);
+  outline-offset: 2px;
+}
+
+.playlist-remove-btn svg {
+  width: 17px;
+  height: 17px;
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 2;
+  stroke-linecap: round;
+  stroke-linejoin: round;
 }
 
 .playlist-cover {

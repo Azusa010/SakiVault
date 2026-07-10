@@ -35,7 +35,7 @@ export interface Music {
 export interface MusicUrl {
   id: string
   source?: MusicSource
-  url: string | null
+  url: string | null | undefined
   isPreview?: boolean
   proxyUrl?: string
 }

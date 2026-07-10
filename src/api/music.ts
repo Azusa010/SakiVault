@@ -41,6 +41,7 @@ interface NeteaseDetailSong {
   al?: NeteaseDetailAlbum
 }
 
+const MUSIC_SERVER_BASE_URL = 'http://localhost:3100'
 
 const musicClient = axios.create({
   baseURL: 'http://localhost:3000',
@@ -48,9 +49,20 @@ const musicClient = axios.create({
 })
 
 const serverClient = axios.create({
-  baseURL: 'http://localhost:3100',
+  baseURL: MUSIC_SERVER_BASE_URL,
   timeout: 15000,
 })
+
+// 构造本地音频流代理地址，避免浏览器直接播放跨域上游地址
+function createMusicStreamUrl(music:Music){
+  const params = new URLSearchParams({
+    id:music.id,
+    name:music.name,
+    artist:music.artist.map(a => a.name).join(','),
+  })
+
+  return `${MUSIC_SERVER_BASE_URL}/music/stream?${params.toString()}`
+}
 
 // 获得歌曲详情
 async function getSongDetail(ids: string[]) {
@@ -122,7 +134,7 @@ export async function getMusicUrl(music: Music): Promise<MusicUrl> {
   return {
     id: data.id,
     source: data.source || music.source,
-    url: data.url,
+    url: data.url ? createMusicStreamUrl(music) : undefined,
     isPreview: data.isPreview,
   }
 }

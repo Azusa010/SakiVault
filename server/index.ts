@@ -9,7 +9,7 @@ const PORT = 3100
 
 // 允许Dev服务器跨域请求
 app.use(cors({
-  origin: "http://localhost:5173",
+  origin: "http://localhost:5173",  
 }))
 
 
