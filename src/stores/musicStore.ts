@@ -13,10 +13,14 @@ export const useMusicStore = defineStore('music', () => {
   const isLoadingUrl = ref(false)
   const error = ref<string | null>(null)
 
+  function getMusicKey(music: Music): string {
+    return `${music.source}-${music.id}`
+  }
   // 当前歌曲的下标
   const currentIndex = computed(() => {
     if (!currentMusic.value) return -1
-    return playlist.value.findIndex((item) => item.id === currentMusic.value?.id)
+    const currentKey = getMusicKey(currentMusic.value)
+    return playlist.value.findIndex((item) => getMusicKey(item) === currentKey)
   })
 
   // 是否有下一首
@@ -43,18 +47,19 @@ export const useMusicStore = defineStore('music', () => {
   }
 
   // play()  设置队列，获取URL，准备播放
-  async function play(music: Music, queue: Music[] = searchResults.value) {
+  async function play(music: Music) {
     isLoadingUrl.value = true
     error.value = null
+
     try {
-      playlist.value = queue
       currentMusic.value = music
 
       const result = await getMusicUrl(music)
       if (!result.url) {
         currentUrl.value = null
-        throw new Error('没有可用播放地址')
+        throw new Error('无可用播放地址')
       }
+
       currentUrl.value = result.url
 
       if (result.isPreview) {
@@ -67,13 +72,52 @@ export const useMusicStore = defineStore('music', () => {
     }
   }
 
+  // 将未在队列中的歌曲追加到末尾，并且播放
+  async function enqueueAndPlay(music: Music) {
+    await enqueue(music)
+    await play(music)
+  }
+
+  function isInPlaylist(music: Music): boolean {
+    const musicKey = getMusicKey(music)
+    return playlist.value.some((item) => getMusicKey(item) === musicKey)
+  }
+
+  async function enqueue(music: Music) {
+    if (!isInPlaylist(music)) {
+      playlist.value.push(music)
+    }
+  }
+
+  // 从队列中移除歌曲，如果当前播放的歌曲被移除，则播放下一首或上一首
+  async function removeFromPlaylist(music: Music) {
+    const musicKey = getMusicKey(music)
+    const removeIndex = playlist.value.findIndex((item) => getMusicKey(item) === musicKey)
+
+    if (removeIndex === -1) return
+
+    const isCurrentMusic = removeIndex === currentIndex.value
+    const fallbackMusic = playlist.value[removeIndex+1] ??playlist.value[removeIndex-1] ?? null
+
+    playlist.value.splice(removeIndex, 1)
+
+    if(!isCurrentMusic) return
+
+    if(fallbackMusic) {
+      await play(fallbackMusic)
+      return
+    }
+
+    clearCurrent()
+  }
+
   // playNext() 播放下一首
   async function playNext() {
     if (!hasNext.value) return
 
     const nextMusic = playlist.value[currentIndex.value + 1]
     if (nextMusic) {
-      await play(nextMusic, playlist.value)
+      await play(nextMusic)
     }
   }
 
@@ -83,7 +127,7 @@ export const useMusicStore = defineStore('music', () => {
 
     const prevMusic = playlist.value[currentIndex.value - 1]
     if (prevMusic) {
-      await play(prevMusic, playlist.value)
+      await play(prevMusic)
     }
   }
 
@@ -110,5 +154,9 @@ export const useMusicStore = defineStore('music', () => {
     playNext,
     playPrev,
     clearCurrent,
+    enqueueAndPlay,
+    enqueue,
+    isInPlaylist,
+    removeFromPlaylist,
   }
 })

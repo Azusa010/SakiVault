@@ -87,7 +87,6 @@
     </div>
   </section>
 
-
   <!-- 音频常驻 -->
   <audio
     :src="musicStore.currentUrl || undefined"
@@ -129,6 +128,7 @@
       <main class="music-panel-body">
         <!-- 首页 -->
         <section v-if="activePage === 'home'" class="player-page player-home">
+          <!-- 专辑封面 -->
           <div class="panel-cover-wrap">
             <img
               v-if="musicStore.currentMusic?.coverUrl"
@@ -139,6 +139,7 @@
             <img v-else src="../assets/pics/emptyCover.png" class="panel-cover" />
           </div>
 
+          <!-- 歌曲信息 -->
           <div class="panel-track-text">
             <h2 class="panel-track-title">{{ musicStore.currentMusic?.name || '未播放' }}</h2>
             <span>
@@ -150,6 +151,7 @@
             </span>
           </div>
 
+          <!-- 进度条 -->
           <div class="progress-row">
             <input
               class="progress-input"
@@ -165,6 +167,7 @@
             <span class="time-text" style="text-align: end">{{ formatTime(duration) }}</span>
           </div>
 
+          <!-- 播放控制 -->
           <div class="play-controls">
             <button
               class="control-btn"
@@ -215,7 +218,49 @@
             />
             <span>{{ Math.round(volume * 100) }}</span>
           </div>
+
+          <!-- 当前播放队列 -->
+          <section class="playlist-section">
+            <div class="playlist-header">
+              <h3>播放队列</h3>
+              <span>{{ musicStore.playlist.length }}首</span>
+            </div>
+
+            <!-- 播放列表 -->
+            <div v-if="musicStore.playlist.length > 0" class="playlist-list">
+              <button
+                v-for="(music, index) in musicStore.playlist"
+                :key="`${music.source}-${music.id}`"
+                type="button"
+                class="playlist-item"
+                :class="{ 'is-current': musicStore.currentIndex === index }"
+                @click="musicStore.play(music)"
+              >
+                <img v-if="music.coverUrl" :src="music.coverUrl" alt="" class="playlist-cover" />
+                <img v-else src="../assets/pics/emptyCover.png" alt="" class="playlist-cover" />
+
+                <span class="playlist-index">{{ String(index + 1).padStart(2, '0') }}</span>
+
+                <span class="playlist-text">
+                  <strong>{{ music.name }}</strong>
+                  <small>{{ formatArtists(music.artist) }}</small>
+                </span>
+
+                <svg
+                  v-if="musicStore.currentIndex === index"
+                  class="playlist-playing-icon"
+                  viewBox="0 0 24 24"
+                  aria-label="当前播放"
+                >
+                  <path d="M5 9h3v6H5zM10.5 5h3v14h-3zM16 8h3v8h-3z" />
+                </svg>
+              </button>
+            </div>
+
+            <p v-else class="playlist-empty">从搜索页添加音乐到播放队列</p>
+          </section>
         </section>
+
         <!-- 搜索页 -->
         <section v-else-if="activePage === 'search'" class="player-page player-search">
           <form class="music-search" @submit.prevent="musicStore.search">
@@ -232,24 +277,47 @@
 
           <p v-if="musicStore.error" class="music-error">{{ musicStore.error }}</p>
 
-          <div v-if="musicStore.searchResults.length > 0" class="music-results">
+          <!-- 搜索结果 -->
+
+          <div
+            v-for="music in musicStore.searchResults"
+            :key="`${music.source}-${music.id}`"
+            class="music-result"
+          >
             <button
-              v-for="music in musicStore.searchResults"
-              :key="`${music.source}-${music.id}`"
               type="button"
-              class="music-result"
-              @click="musicStore.play(music)"
+              class="music-result-main"
+              @click="musicStore.enqueueAndPlay(music)"
             >
               <img v-if="music.coverUrl" :src="music.coverUrl" alt="" class="music-cover" />
               <img v-else src="../assets/pics/emptyCover.png" alt="" class="music-cover" />
 
-              <div class="music-info">
+              <span class="music-info">
                 <span class="music-name">{{ music.name }}</span>
                 <span class="music-artist">{{ formatArtists(music.artist) }}</span>
-              </div>
+              </span>
+            </button>
+
+            <button
+              type="button"
+              class="music-enqueue-btn"
+              :class="{ 'is-queued': musicStore.isInPlaylist(music) }"
+              :aria-label="musicStore.isInPlaylist(music) ? '已加入播放队列' : '添加到播放队列'"
+              :disabled="musicStore.isInPlaylist(music)"
+              @click="musicStore.enqueue(music)"
+            >
+              <svg v-if="musicStore.isInPlaylist(music)" viewBox="0 0 24 24" aria-hidden="true">
+                <path d="m5 12.5 4.3 4.3L19.5 6.6l-1.4-1.4-8.8 8.8-2.9-2.9z" />
+              </svg>
+              <svg v-else viewBox="0 0 24 24" aria-hidden="true">
+                <path d="M11 5h2v6h6v2h-6v6h-2v-6H5v-2h6z" />
+              </svg>
             </button>
           </div>
-          <div v-else class="player-empty-state">搜索你想播放的音乐</div>
+
+          <div v-if="!musicStore.searchResults.length" class="player-empty-state">
+            搜索你想播放的音乐
+          </div>
         </section>
 
         <!-- 收藏/歌单页 -->
@@ -386,7 +454,6 @@ function handlePause() {
   isPlaying.value = false
 }
 
-
 // 播放/暂停 歌曲
 async function togglePlay() {
   const audio = audioRef.value
@@ -396,7 +463,7 @@ async function togglePlay() {
     try {
       await audio.play()
     } catch {
-      isPlaying.value=false
+      isPlaying.value = false
     }
     return
   }
@@ -962,25 +1029,83 @@ watch(volume, (value) => {
   margin-top: var(--space-sm);
   overflow: visible;
 }
-
 .music-result {
   width: 100%;
-  display: flex;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 34px;
   align-items: center;
-  gap: var(--space-sm);
-  padding: 8px;
-  border: 0;
+  gap: 4px;
+  padding: 4px;
   border-radius: var(--radius-md);
-  background: transparent;
-  color: var(--text-main);
-  text-align: left;
-  cursor: pointer;
+  transition: background-color 0.18s ease;
 }
 
 .music-result:hover {
   background: rgba(255, 255, 255, 0.06);
 }
 
+.music-result-main {
+  min-width: 0;
+  display: flex;
+  align-items: center;
+  gap: var(--space-sm);
+  padding: 4px;
+  border: 0;
+  border-radius: 6px;
+  background: transparent;
+  color: var(--text-main);
+  text-align: left;
+  cursor: pointer;
+}
+
+.music-enqueue-btn {
+  width: 32px;
+  height: 32px;
+  display: grid;
+  place-items: center;
+  padding: 0;
+  border: 0;
+  border-radius: 50%;
+  background: rgba(159, 93, 255, 0.12);
+  color: var(--color-primary);
+  cursor: pointer;
+  transition:
+    background-color 0.18s ease,
+    color 0.18s ease,
+    transform 0.18s ease;
+}
+
+.music-enqueue-btn:hover {
+  background: rgba(117, 251, 207, 0.8);
+  color: #2d2741;
+  transform: scale(1.06);
+}
+
+.music-enqueue-btn.is-queued,
+.music-enqueue-btn:disabled {
+  background: rgba(117, 251, 207, 0.12);
+  color: #75fbcf;
+  cursor: default;
+  opacity: 1;
+}
+
+.music-enqueue-btn:disabled:hover {
+  background: rgba(117, 251, 207, 0.12);
+  color: #75fbcf;
+  transform: none;
+}
+
+.music-result-main:focus-visible,
+.music-enqueue-btn:focus-visible {
+  outline: 2px solid var(--color-primary);
+  outline-offset: 2px;
+}
+
+.music-enqueue-btn svg {
+  width: 20px;
+  height: 20px;
+  fill: currentColor;
+}
 .music-cover {
   flex: 0 0 auto;
   width: 42px;
@@ -1095,6 +1220,117 @@ watch(volume, (value) => {
   color: var(--text-disabled);
   font-size: 0.76rem;
   text-align: right;
+}
+
+.playlist-section {
+  margin-top: 26px;
+  padding-top: 18px;
+  border-top: 1px solid rgba(255, 255, 255, 0.08);
+}
+
+.playlist-header {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  margin-bottom: 10px;
+}
+
+.playlist-header h3 {
+  margin: 0;
+  color: var(--text-main);
+  font-size: 0.9rem;
+  font-weight: 700;
+}
+
+.playlist-header span {
+  color: var(--text-disabled);
+  font-size: 0.75rem;
+}
+
+.playlist-list {
+  display: grid;
+  gap: 5px;
+}
+
+.playlist-item {
+  width: 100%;
+  display: grid;
+  grid-template-columns: 38px 26px minmax(0, 1fr) 20px;
+  align-items: center;
+  gap: 9px;
+  min-height: 54px;
+  padding: 7px;
+  border: 0;
+  border-radius: 8px;
+  background: transparent;
+  color: var(--text-main);
+  text-align: left;
+  cursor: pointer;
+  transition: background-color 0.18s ease;
+}
+
+.playlist-item:hover {
+  background: rgba(255, 255, 255, 0.06);
+}
+
+.playlist-item.is-current {
+  background: rgba(159, 93, 255, 0.14);
+}
+
+.playlist-cover {
+  width: 38px;
+  height: 38px;
+  border-radius: 6px;
+  object-fit: cover;
+}
+
+.playlist-index {
+  color: var(--text-disabled);
+  font-size: 0.72rem;
+  text-align: center;
+}
+
+.playlist-item.is-current .playlist-index {
+  color: var(--color-primary);
+}
+
+.playlist-text {
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+}
+
+.playlist-text strong,
+.playlist-text small {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.playlist-text strong {
+  color: var(--text-main);
+  font-size: 0.82rem;
+  font-weight: 600;
+}
+
+.playlist-text small {
+  color: var(--text-muted);
+  font-size: 0.72rem;
+}
+
+.playlist-playing-icon {
+  width: 18px;
+  height: 18px;
+  fill: var(--color-primary);
+}
+
+.playlist-empty {
+  margin: 0;
+  padding: 20px 0;
+  color: var(--text-muted);
+  font-size: 0.8rem;
+  text-align: center;
 }
 
 .control-btn,
