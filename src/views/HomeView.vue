@@ -209,11 +209,6 @@ onMounted(async () => {
   margin-bottom: var(--space-sm);
 }
 
-.hero-subtitle {
-  font-size: 1.125rem;
-  color: var(--text-muted);
-  margin-bottom: var(--space-lg);
-}
 
 .search-section {
   width: 100vh;

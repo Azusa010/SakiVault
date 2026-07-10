@@ -88,56 +88,6 @@ export async function getPopularAnime(limit = 10) {
   )
 }
 
-// 合并 rank 和 date 两个维度的近期番剧，按 collection 热度分排序
-export async function getRecentPopularAnime(limit = 30) {
-  const now = new Date()
-  const year = now.getFullYear()
-  const month = now.getMonth() + 1
-
-  const [rankResponse, dateResponse] = await Promise.all([
-    bangumiClient.get('/v0/subjects', {
-      params: { type: 2, sort: 'rank', year, month },
-    }),
-    bangumiClient.get('/v0/subjects', {
-      params: { type: 2, sort: 'date', year, month },
-    }),
-  ])
-
-  const merged = new Map()
-
-  const addItems = (items: BangumiSubject[]) => {
-    for (const item of items || []) {
-      if (!merged.has(item.id)) {
-        merged.set(item.id, item)
-      }
-    }
-  }
-
-  addItems(rankResponse.data.data)
-  addItems(dateResponse.data.data)
-
-  return Array.from(merged.values())
-    .map((item: BangumiSubject) => {
-      const collection = item.collection || {}
-      const heatScore =
-        (collection.on_hold ?? 0) +
-        (collection.dropped ?? 0) +
-        (collection.wish ?? 0) +
-        (collection.collect ?? 0) +
-        (collection.doing ?? 0)
-
-      return {
-        id: item.id,
-        title: item.name_cn || item.name,
-        coverImage: getAnimeImageUrl(item.id, 'large'),
-        averageScore: item.rating?.score,
-        episodes: item.eps,
-        heatScore,
-      }
-    })
-    .sort((a, b) => b.heatScore - a.heatScore)
-    .slice(0, limit)
-}
 
 // 获得热门条目
 export async function getHotSubjects(limit = 30) {

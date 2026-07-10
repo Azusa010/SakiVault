@@ -66,9 +66,6 @@ export const useFavStore = defineStore('favStore', () => {
     return items.value[id]
   }
 
-  function has(id:number):boolean{
-    return id in items.value
-  }
 
   loadFromStorage()
 
@@ -78,6 +75,5 @@ export const useFavStore = defineStore('favStore', () => {
     saveFavorite,
     remove,
     getById,
-    has,
   }
 })

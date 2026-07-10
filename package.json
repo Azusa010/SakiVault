@@ -17,7 +17,8 @@
     "format": "prettier --write --experimental-cli src/",
     "build:vercel": "npm run build-only",
     "server:dev": "tsx server/index.ts",
-    "dev:all": "run-p dev server:dev"
+    "music-api:dev" : "cd api-enhanced && node app.js",
+    "dev:all": "run-p dev server:dev music-api:dev"
   },
   "dependencies": {
     "@types/cors": "^2.8.19",

@@ -87,17 +87,21 @@
     </div>
   </section>
 
+
+  <!-- 音频常驻 -->
+  <audio
+    :src="musicStore.currentUrl || undefined"
+    ref="audioRef"
+    @loadedmetadata="handleLoadedMetadata"
+    @timeupdate="handleTimeUpdate"
+    @ended="handleEnded"
+    @play="handlePlay"
+    @pause="handlePause"
+  />
+
   <!-- 完整播放器 -->
   <Teleport to="body">
     <section v-if="isPanelOpen" class="music-player">
-      <audio
-        :src="musicStore.currentUrl || undefined"
-        ref="audioRef"
-        @loadedmetadata="handleLoadedMetadata"
-        @timeupdate="handleTimeUpdate"
-        @ended="handleEnded"
-      />
-
       <!-- 播放器头部 -->
       <header class="music-panel-header">
         <!-- 品牌标识 -->
@@ -148,19 +152,18 @@
 
           <div class="progress-row">
             <input
-            class="progress-input"
+              class="progress-input"
               type="range"
               min="0"
               :max="duration || 0"
               :disabled="!duration"
               :value="currentTime"
               @input="handleSeek"
-              />
-              <span class="time-text">{{ formatTime(currentTime) }}</span>
-              <span></span>
-            <span class="time-text" style="text-align: end;">{{ formatTime(duration) }}</span>
+            />
+            <span class="time-text">{{ formatTime(currentTime) }}</span>
+            <span></span>
+            <span class="time-text" style="text-align: end">{{ formatTime(duration) }}</span>
           </div>
-
 
           <div class="play-controls">
             <button
@@ -375,18 +378,29 @@ function formatTime(time: number): string {
   return `${String(minutes).padStart(2, '0')}:${String(seconds).padStart(2, '0')}`
 }
 
+function handlePlay() {
+  isPlaying.value = true
+}
+
+function handlePause() {
+  isPlaying.value = false
+}
+
+
 // 播放/暂停 歌曲
 async function togglePlay() {
   const audio = audioRef.value
   if (!audio || !musicStore.currentUrl) return
 
   if (audio.paused) {
-    await audio.play()
-    isPlaying.value = true
-  } else {
-    audio.pause()
-    isPlaying.value = false
+    try {
+      await audio.play()
+    } catch {
+      isPlaying.value=false
+    }
+    return
   }
+  audio.pause()
 }
 
 // 拖动进度条进行跳转
@@ -427,7 +441,6 @@ watch(
     await nextTick()
     try {
       await audioRef.value?.play()
-      isPlaying.value = true
     } catch {
       isPlaying.value = false
     }

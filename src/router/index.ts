@@ -7,7 +7,6 @@ const router = createRouter({
       path: '/',
       name: 'home',
       component: () => import('@/views/HomeView.vue'),
-      meta: { keepAlive: true },
     },
     {
       path: '/search',
