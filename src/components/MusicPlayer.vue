@@ -159,7 +159,7 @@
         <section v-if="activePage === 'home'" class="player-page player-home">
           <div class="player-home-control">
             <!-- 专辑封面 -->
-            <div class="panel-cover-wrap" :class="{'is-reduce':!isPlaying}" >
+            <div class="panel-cover-wrap" :class="{ 'is-reduce': !isPlaying }">
               <img
                 v-if="musicStore.currentMusic?.coverUrl"
                 :src="musicStore.currentMusic.coverUrl"
@@ -567,7 +567,7 @@
 </template>
 
 <script setup lang="ts" name="MusicPlayer">
-import { nextTick, ref, watch, onBeforeUnmount, computed, reactive } from 'vue'
+import { nextTick, ref, watch, onBeforeUnmount, computed, reactive, onMounted } from 'vue'
 import { useMusicStore } from '@/stores/musicStore'
 import type { Music } from '@/types/music'
 import { getMusicLyric } from '@/api/music'
@@ -584,6 +584,10 @@ const emit = defineEmits<{
 onBeforeUnmount(() => {
   stopAudioAnalysis()
   void audioContext?.close()
+})
+
+onMounted(() => {
+  if (audioRef.value) audioRef.value.volume = volume.value
 })
 
 function formatArtists(artists: Music['artist']): string {
@@ -643,7 +647,20 @@ function scrollLyric() {
 
 let lyricRequestId = 0
 
-const volume = ref(0.8)
+const PLAYER_VOLUME_STORAGE_KEY = 'sakivault:player-volume'
+
+function readPlayerVolume(): number {
+  try {
+    const savedValue = Number(window.localStorage.getItem(PLAYER_VOLUME_STORAGE_KEY))
+
+    if (Number.isFinite(savedValue) && savedValue >= 0 && savedValue <= 1) {
+      return savedValue
+    }
+  } catch {}
+  return 0.8
+}
+
+const volume = ref(readPlayerVolume())
 
 // 新背景使用同一份响应式状态；下一步会由新节拍检测更新它。
 const backgroundAudio = reactive(createAudioReactiveState())
@@ -1121,6 +1138,10 @@ watch(
 
 watch(volume, (value) => {
   if (audioRef.value) audioRef.value.volume = value
+
+  try {
+    window.localStorage.setItem(PLAYER_VOLUME_STORAGE_KEY, String(value))
+  } catch {}
 })
 
 watch(isPlayerFullscreen, (isFullscreen) => {
@@ -1933,8 +1954,6 @@ watch(isPlayerFullscreen, (isFullscreen) => {
   aspect-ratio: 1;
   object-fit: cover;
 }
-
-
 
 .panel-track-text {
   display: flex;
