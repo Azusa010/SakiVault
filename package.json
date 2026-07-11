@@ -3,6 +3,7 @@
   "version": "0.0.0",
   "private": true,
   "type": "module",
+  "main": "electron/main.ts",
   "scripts": {
     "dev": "vite",
     "build": "run-p type-check \"build-only {@}\" --",
@@ -17,8 +18,9 @@
     "format": "prettier --write --experimental-cli src/",
     "build:vercel": "npm run build-only",
     "server:dev": "tsx server/index.ts",
-    "music-api:dev" : "cd api-enhanced && node app.js",
-    "dev:all": "run-p dev server:dev music-api:dev"
+    "music-api:dev": "cd api-enhanced && node app.js",
+    "dev:all": "run-p dev server:dev music-api:dev start",
+    "start": "electron --import=tsx ."
   },
   "dependencies": {
     "@types/cors": "^2.8.19",
@@ -27,9 +29,11 @@
     "@vueuse/core": "^14.3.0",
     "axios": "^1.18.1",
     "cors": "^2.8.6",
+    "electron": "^43.1.0",
     "express": "^5.2.1",
     "https-proxy-agent": "^9.1.0",
     "pinia": "^3.0.4",
+    "three": "^0.185.1",
     "tsx": "^4.23.0",
     "vue": "^3.5.38",
     "vue-router": "^5.1.0"

@@ -31,6 +31,40 @@ export interface MusicUrlResult {
   isPreview: boolean
 }
 
+interface NeteaseLyricResponse {
+  lrc?: {
+    lyric?: string
+  }
+  tlyric?: {
+    lyric?: string
+  }
+  yrc?: {
+    lyric?: string
+  }
+}
+
+/** 网关返回给前端的原歌词和翻译歌词。 */
+export interface MusicLyricResult {
+  id: string
+  lyric: string
+  translation: string
+  wordLyric: string
+}
+
+/** 从本地 api-enhanced 获取网易云歌曲的带时间戳歌词。 */
+export async function getMusicLyrics(id: string): Promise<MusicLyricResult> {
+  const response = await axios.get<NeteaseLyricResponse>(`${API_ENHANCED_BASE_URL}/lyric/new`, {
+    params: { id },
+  })
+
+  return {
+    id,
+    lyric: response.data.lrc?.lyric || '',
+    translation: response.data.tlyric?.lyric || '',
+    wordLyric: response.data.yrc?.lyric || '',
+  }
+}
+
 // 判断api-enhanced返回是否为试听
 function isPreviewUrl(item?: NeteaseSongUrlItem) {
   return Boolean(item?.freeTrialInfo)

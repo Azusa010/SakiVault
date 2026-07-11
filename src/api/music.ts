@@ -1,5 +1,5 @@
 import axios from 'axios'
-import type { Music, MusicUrl } from '@/types/music'
+import type { Music, MusicUrl,MusicLyric } from '@/types/music'
 
 // 歌手
 interface NeteaseArtist {
@@ -137,4 +137,13 @@ export async function getMusicUrl(music: Music): Promise<MusicUrl> {
     url: data.url ? createMusicStreamUrl(music) : undefined,
     isPreview: data.isPreview,
   }
+}
+
+export async function getMusicLyric(id:string): Promise<MusicLyric> {
+  const response = await serverClient.get<{ok:boolean,data:MusicLyric}>('/music/lyric',{
+    params:{
+      id
+    }
+  })
+  return response.data.data
 }

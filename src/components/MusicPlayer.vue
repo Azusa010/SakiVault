@@ -101,11 +101,27 @@
 
   <!-- 完整播放器 -->
   <Teleport to="body">
+    <!-- 调整大小标签 -->
+    <button
+      v-if="isPanelOpen && !isPlayerFullscreen"
+      type="button"
+      class="music-resize-tab"
+      :class="{ 'is-resizing': isResizing, 'is-snapping': isSnappingFullscreen }"
+      :style="{ '--player-width': `${panelWidth}px` }"
+      @pointerdown="handleResizeStart"
+    >
+      <svg viewBox="0 0 24 24" aria-hidden="true">
+        <path d="M8 5v14M12 5v14M16 5v14" />
+      </svg>
+    </button>
+
     <section
       v-if="isPanelOpen"
       class="music-player"
       ref="playerPanelRef"
+      :class="{ 'is-fullscreen': isPlayerFullscreen, 'is-snapping': isSnappingFullscreen }"
       :style="{
+        '--player-width': `${panelWidth}px`,
         '--cover-primary': coverPalette.primary,
         '--cover-secondary': coverPalette.secondary,
         '--cover-accent': coverPalette.accent,
@@ -138,152 +154,195 @@
       <main class="music-panel-body">
         <!-- 首页 -->
         <section v-if="activePage === 'home'" class="player-page player-home">
-          <!-- 专辑封面 -->
-          <div class="panel-cover-wrap">
-            <img
-              v-if="musicStore.currentMusic?.coverUrl"
-              :src="musicStore.currentMusic.coverUrl"
-              alt=""
-              class="panel-cover"
-            />
-            <img v-else src="../assets/pics/emptyCover.png" class="panel-cover" />
-          </div>
-
-          <!-- 歌曲信息 -->
-          <div class="panel-track-text">
-            <h2 class="panel-track-title">{{ musicStore.currentMusic?.name || '未播放' }}</h2>
-            <span>
-              {{
-                musicStore.currentMusic
-                  ? formatArtists(musicStore.currentMusic.artist)
-                  : '选择一首音乐'
-              }}
-            </span>
-          </div>
-
-          <!-- 进度条 -->
-          <div class="progress-row">
-            <input
-              class="progress-input"
-              type="range"
-              min="0"
-              :max="duration || 0"
-              :disabled="!duration"
-              :value="currentTime"
-              @input="handleSeek"
-            />
-            <span class="time-text">{{ formatTime(currentTime) }}</span>
-            <span></span>
-            <span class="time-text" style="text-align: end">{{ formatTime(duration) }}</span>
-          </div>
-
-          <!-- 播放控制 -->
-          <div class="play-controls">
-            <button
-              class="control-btn"
-              :disabled="!musicStore.hasPrev"
-              @click="musicStore.playPrev"
-            >
-              <svg viewBox="0 0 24 24" aria-hidden="true">
-                <path d="M6 5h2v14H6z" />
-                <path d="M19 6v12L9.5 12z" />
-              </svg>
-            </button>
-
-            <button class="play-btn" :disabled="!musicStore.currentUrl" @click="togglePlay">
-              <svg v-if="isPlaying" viewBox="0 0 24 24" aria-hidden="true">
-                <path d="M7 5h3v14H7z" />
-                <path d="M14 5h3v14h-3z" />
-              </svg>
-              <svg v-else viewBox="0 0 24 24" aria-hidden="true">
-                <path d="M8 5v14l11-7z" />
-              </svg>
-            </button>
-
-            <button
-              class="control-btn"
-              :disabled="!musicStore.hasNext"
-              @click="musicStore.playNext"
-            >
-              <svg viewBox="0 0 24 24" aria-hidden="true">
-                <path d="M16 5h2v14h-2z" />
-                <path d="M5 6v12l9.5-6z" />
-              </svg>
-            </button>
-          </div>
-
-          <!-- 音量控制 -->
-          <div class="volume-row">
-            <svg viewBox="0 0 24 24" aria-hidden="true">
-              <path d="M4 9v6h4l5 4V5L8 9z" />
-              <path d="M16 8.5a5 5 0 0 1 0 7l1.4 1.4a7 7 0 0 0 0-9.8z" />
-            </svg>
-            <input
-              type="range"
-              class="volume-input"
-              min="0"
-              max="1"
-              step="0.01"
-              v-model.number="volume"
-            />
-            <span>{{ Math.round(volume * 100) }}</span>
-          </div>
-
-          <!-- 当前播放队列 -->
-          <section class="playlist-section">
-            <div class="playlist-header">
-              <h3>播放队列</h3>
-              <span>{{ musicStore.playlist.length }}首</span>
+          <div class="player-home-control">
+            <!-- 专辑封面 -->
+            <div class="panel-cover-wrap">
+              <img
+                v-if="musicStore.currentMusic?.coverUrl"
+                :src="musicStore.currentMusic.coverUrl"
+                alt=""
+                class="panel-cover"
+              />
+              <img v-else src="../assets/pics/emptyCover.png" class="panel-cover" />
             </div>
 
-            <!-- 播放列表 -->
-            <div v-if="musicStore.playlist.length > 0" class="playlist-list">
-              <div
-                v-for="(music, index) in musicStore.playlist"
-                :key="`${music.source}-${music.id}`"
-                class="playlist-item"
-                :class="{ 'is-current': musicStore.currentIndex === index }"
+            <!-- 歌曲信息 -->
+            <div class="panel-track-text">
+              <h2 class="panel-track-title">{{ musicStore.currentMusic?.name || '未播放' }}</h2>
+              <span>
+                {{
+                  musicStore.currentMusic
+                    ? formatArtists(musicStore.currentMusic.artist)
+                    : '选择一首音乐'
+                }}
+              </span>
+            </div>
+
+            <!-- 进度条 -->
+            <div class="progress-row">
+              <input
+                class="progress-input"
+                type="range"
+                min="0"
+                :max="duration || 0"
+                :disabled="!duration"
+                :value="currentTime"
+                :style="{
+                  '--progress-ratio': `${duration ? (currentTime / duration) * 100 : 0}%`,
+                }"
+                @input="handleSeek"
+              />
+              <span class="time-text">{{ formatTime(currentTime) }}</span>
+              <span></span>
+              <span class="time-text" style="text-align: end">{{ formatTime(duration) }}</span>
+            </div>
+
+            <!-- 播放控制 -->
+            <div class="play-controls">
+              <button
+                class="control-btn"
+                :disabled="!musicStore.hasPrev"
+                @click="musicStore.playPrev"
               >
-                <button type="button" class="playlist-item-main" @click="musicStore.play(music)">
-                  <img v-if="music.coverUrl" :src="music.coverUrl" alt="" class="playlist-cover" />
-                  <img v-else src="../assets/pics/emptyCover.png" alt="" class="playlist-cover" />
+                <svg viewBox="0 0 24 24" aria-hidden="true">
+                  <path d="M6 5h2v14H6z" />
+                  <path d="M19 6v12L9.5 12z" />
+                </svg>
+              </button>
 
-                  <span class="playlist-index">{{ String(index + 1).padStart(2, '0') }}</span>
+              <button class="play-btn" :disabled="!musicStore.currentUrl" @click="togglePlay">
+                <svg v-if="isPlaying" viewBox="0 0 24 24" aria-hidden="true">
+                  <path d="M7 5h3v14H7z" />
+                  <path d="M14 5h3v14h-3z" />
+                </svg>
+                <svg v-else viewBox="0 0 24 24" aria-hidden="true">
+                  <path d="M8 5v14l11-7z" />
+                </svg>
+              </button>
 
-                  <span class="playlist-text">
-                    <strong>{{ music.name }}</strong>
-                    <small>{{ formatArtists(music.artist) }}</small>
-                  </span>
-
-                  <svg
-                    v-if="musicStore.currentIndex === index"
-                    class="playlist-playing-icon"
-                    viewBox="0 0 24 24"
-                    aria-label="当前播放"
-                  >
-                    <path d="M5 9h3v6H5zM10.5 5h3v14h-3zM16 8h3v8h-3z" />
-                  </svg>
-                </button>
-
-                <button
-                  type="button"
-                  class="playlist-remove-btn"
-                  aria-label="从播放列表移出歌曲"
-                  @click="musicStore.removeFromPlaylist(music)"
-                >
-                  <svg viewBox="0 0 24 24" aria-hidden="true">
-                    <path d="M3 6h18" />
-                    <path d="M8 6V4h8v2" />
-                    <path d="m19 6-1 14H6L5 6" />
-                    <path d="M10 11v5" />
-                    <path d="M14 11v5" />
-                  </svg>
-                </button>
-              </div>
+              <button
+                class="control-btn"
+                :disabled="!musicStore.hasNext"
+                @click="musicStore.playNext"
+              >
+                <svg viewBox="0 0 24 24" aria-hidden="true">
+                  <path d="M16 5h2v14h-2z" />
+                  <path d="M5 6v12l9.5-6z" />
+                </svg>
+              </button>
             </div>
 
-            <p v-else class="playlist-empty">从搜索页添加音乐到播放队列</p>
-          </section>
+            <!-- 音量控制 -->
+            <div class="volume-row">
+              <svg viewBox="0 0 24 24" aria-hidden="true">
+                <path d="M4 9v6h4l5 4V5L8 9z" />
+                <path d="M16 8.5a5 5 0 0 1 0 7l1.4 1.4a7 7 0 0 0 0-9.8z" />
+              </svg>
+              <input
+                type="range"
+                class="volume-input"
+                min="0"
+                max="1"
+                step="0.01"
+                v-model.number="volume"
+                :style="{ '--volume-ratio': `${volume * 100}%` }"
+              />
+              <svg
+                v-if="isPlayerFullscreen"
+                class="volume-max-icon"
+                viewBox="0 0 24 24"
+                aria-hidden="true"
+              >
+                <path d="M4 9v6h4l5 4V5L8 9z" />
+                <path d="M16 8.5a5 5 0 0 1 0 7l1.4 1.4a7 7 0 0 0 0-9.8z" />
+              </svg>
+              <span v-else>{{ Math.round(volume * 100) }}</span>
+            </div>
+
+            <!-- 当前播放队列 -->
+            <section class="playlist-section">
+              <div class="playlist-header">
+                <h3>播放队列</h3>
+                <span>{{ musicStore.playlist.length }}首</span>
+              </div>
+
+              <!-- 播放列表 -->
+              <div v-if="musicStore.playlist.length > 0" class="playlist-list">
+                <div
+                  v-for="(music, index) in musicStore.playlist"
+                  :key="`${music.source}-${music.id}`"
+                  class="playlist-item"
+                  :class="{ 'is-current': musicStore.currentIndex === index }"
+                >
+                  <button type="button" class="playlist-item-main" @click="musicStore.play(music)">
+                    <img
+                      v-if="music.coverUrl"
+                      :src="music.coverUrl"
+                      alt=""
+                      class="playlist-cover"
+                    />
+                    <img v-else src="../assets/pics/emptyCover.png" alt="" class="playlist-cover" />
+
+                    <span class="playlist-index">{{ String(index + 1).padStart(2, '0') }}</span>
+
+                    <span class="playlist-text">
+                      <strong>{{ music.name }}</strong>
+                      <small>{{ formatArtists(music.artist) }}</small>
+                    </span>
+
+                    <svg
+                      v-if="musicStore.currentIndex === index"
+                      class="playlist-playing-icon"
+                      viewBox="0 0 24 24"
+                      aria-label="当前播放"
+                    >
+                      <path d="M5 9h3v6H5zM10.5 5h3v14h-3zM16 8h3v8h-3z" />
+                    </svg>
+                  </button>
+
+                  <button
+                    type="button"
+                    class="playlist-remove-btn"
+                    aria-label="从播放列表移出歌曲"
+                    @click="musicStore.removeFromPlaylist(music)"
+                  >
+                    <svg viewBox="0 0 24 24" aria-hidden="true">
+                      <path d="M3 6h18" />
+                      <path d="M8 6V4h8v2" />
+                      <path d="m19 6-1 14H6L5 6" />
+                      <path d="M10 11v5" />
+                      <path d="M14 11v5" />
+                    </svg>
+                  </button>
+                </div>
+              </div>
+
+              <p v-else class="playlist-empty">从搜索页添加音乐到播放队列</p>
+            </section>
+          </div>
+
+          <!-- 歌词面板 -->
+          <aside v-if="isPlayerFullscreen" class="lyrics-panel">
+            <p v-if="isLyricsLoading" class="lyrics-status">歌词加载中</p>
+
+            <p v-else-if="lyricsError" class="lyrics-status">{{ lyricsError }}</p>
+
+            <div v-else ref="lyricsTrackRef" class="lyrics-track">
+              <p
+                v-for="(line, index) in lyricLines"
+                :key="`${line.time}-${index}`"
+                :data-lyric-index="index"
+                class="lyric-line"
+                :class="{
+                  'is-current': index === currentLyricIndex,
+                  'is-past': index < currentLyricIndex,
+                }"
+              >
+                <span>{{ line.text }}</span>
+                <small v-if="line.translation">{{ line.translation }}</small>
+              </p>
+            </div>
+          </aside>
         </section>
 
         <!-- 搜索页 -->
@@ -358,7 +417,20 @@
         </section>
       </main>
 
-      <nav class="music-panel-tabs">
+      <div v-if="isPlayerFullscreen" class="fullscreen-sidebar-hotspot" />
+      <!-- 底部导航 -->
+      <nav class="music-panel-tabs" :class="{ 'is-fullscreen-sidebar': isPlayerFullscreen }">
+        <button
+          v-if="isPlayerFullscreen"
+          type="button"
+          class="fullscreen-collapse-tab"
+          aria-label="向右拖动缩小播放器"
+          @pointerdown="handleResizeStart"
+        >
+          <svg viewBox="0 0 24 24" aria-hidden="true">
+            <path d="M8 5v14M12 5v14M16 5v14" />
+          </svg>
+        </button>
         <button
           type="button"
           class="panel-tab-btn"
@@ -413,11 +485,17 @@
 </template>
 
 <script setup lang="ts" name="MusicPlayer">
-import { nextTick, ref, watch, onBeforeUnmount } from 'vue'
+import { nextTick, ref, watch, onBeforeUnmount, computed } from 'vue'
 import { useMusicStore } from '@/stores/musicStore'
 import type { Music } from '@/types/music'
+import { getMusicLyric } from '@/api/music'
+import { parseLrc, type LyricLine } from '@/utils/lrc'
 
 const musicStore = useMusicStore()
+
+const emit = defineEmits<{
+  'fullscreen-change': [isFullscreen: boolean]
+}>()
 
 onBeforeUnmount(() => {
   stopAudioAnalysis()
@@ -433,6 +511,53 @@ const playerPanelRef = ref<HTMLElement | null>(null)
 const isPlaying = ref(false)
 const currentTime = ref(0)
 const duration = ref(0)
+type PlayerLyricLine = LyricLine & { translation?: string }
+const lyricLines = ref<PlayerLyricLine[]>([])
+
+/** 右侧可滚动歌词容器。 */
+const lyricsTrackRef = ref<HTMLElement | null>(null)
+
+const isLyricsLoading = ref(false)
+const lyricsError = ref('')
+
+/** 当前播放时间命中的歌词下标；没有歌词时为 -1。 */
+const currentLyricIndex = computed(() => {
+  const currentMilliseconds = currentTime.value * 1000
+  let index = -1
+
+  for (let lineIndex = 0; lineIndex < lyricLines.value.length; lineIndex += 1) {
+    if (lyricLines.value[lineIndex]!.time > currentMilliseconds) break
+    index = lineIndex
+  }
+  return index
+})
+
+function scrollLyric() {
+  const track = lyricsTrackRef.value
+
+  if (!track || currentLyricIndex.value < 0) return
+
+  const currentLine = track.querySelector<HTMLElement>(
+    `[data-lyric-index="${currentLyricIndex.value}"]`,
+  )
+
+  if (!currentLine) return
+
+  const trackBounds = track.getBoundingClientRect()
+  const lineBounds = currentLine.getBoundingClientRect()
+
+  track.scrollTo({
+    top:
+      track.scrollTop +
+      lineBounds.top -
+      trackBounds.top -
+      track.clientHeight / 2 +
+      currentLine.clientHeight / 2,
+    behavior: 'smooth',
+  })
+}
+
+let lyricRequestId = 0
 
 const volume = ref(0.8)
 
@@ -464,6 +589,21 @@ let analysisFrameId: number | null = null
 // 完整播放器是否展开
 const isPanelOpen = ref(false)
 
+// 右侧播放器当前宽度
+const panelWidth = ref(410)
+
+// 是否正在拖动调整播放器宽度
+const isResizing = ref(false)
+
+// 播放器是否全屏
+const isPlayerFullscreen = ref(false)
+
+// 是否播放2全屏过渡动画
+const isSnappingFullscreen = ref(false)
+
+let resizeStartX = 0
+let resizeStartWidth = 0
+
 // 控制鼠标悬浮显示迷你控制器
 const isMiniVisible = ref(false)
 
@@ -475,11 +615,68 @@ const activePage = ref<PlayerPage>('home')
 function openPanel() {
   isPanelOpen.value = true
   isMiniVisible.value = false
+
+  if (window.innerWidth <= 768) {
+    panelWidth.value = window.innerWidth
+  }
+
+  updatePlayerFullscreen()
 }
 
 // 关闭完整播放器
 function closePanel() {
   isPanelOpen.value = false
+  panelWidth.value = 410
+  updatePlayerFullscreen()
+}
+
+// 同步全屏状态，避免重复出发父组件刷新
+function updatePlayerFullscreen() {
+  const nextFullscreen = panelWidth.value >= window.innerWidth - 1
+  if (isPlayerFullscreen.value === nextFullscreen) return
+
+  isPlayerFullscreen.value = nextFullscreen
+  emit('fullscreen-change', nextFullscreen)
+}
+
+//开始拖动调整条/向左拓宽，向右变窄
+function handleResizeStart(event: PointerEvent) {
+  if (window.innerWidth <= 768) return
+
+  event.preventDefault()
+  isResizing.value = true
+  resizeStartX = event.clientX
+  resizeStartWidth = panelWidth.value
+
+  window.addEventListener('pointermove', handleResizeMove)
+  window.addEventListener('pointerup', handleResizeEnd, { once: true })
+}
+
+// 根据指针移动距离更新右侧播放器宽度
+function handleResizeMove(event: PointerEvent) {
+  const minimunWidth = Math.min(360, window.innerWidth)
+  const nextWidth = resizeStartWidth + resizeStartX - event.clientX
+
+  panelWidth.value = Math.min(window.innerWidth, Math.max(minimunWidth, nextWidth))
+  updatePlayerFullscreen()
+}
+
+// 停止拖动并移处全局事务监听
+function handleResizeEnd() {
+  isResizing.value = false
+  window.removeEventListener('pointermove', handleResizeMove)
+
+  const shouldSnapFullscreen = panelWidth.value / window.innerWidth >= 0.82
+
+  if (!shouldSnapFullscreen) return
+
+  isSnappingFullscreen.value = true
+  panelWidth.value = window.innerWidth
+
+  window.setTimeout(() => {
+    isSnappingFullscreen.value = false
+    updatePlayerFullscreen()
+  }, 280)
 }
 
 // 显示迷你控制栏
@@ -518,6 +715,27 @@ function getColorDistance(first: RgbColor, second: RgbColor): number {
   return Math.hypot(first.red - second.red, first.green - second.green, first.blue - second.blue)
 }
 
+/** 计算 RGB 的感知亮度，范围为 0 到 255。 */
+function getBrightness({ red, green, blue }: RgbColor): number {
+  return (red * 299 + green * 587 + blue * 114) / 1000
+}
+
+/** 将过暗的封面色提亮到可作为动态背景的最低亮度。 */
+function liftBackgroundColor(color: RgbColor): RgbColor {
+  const brightness = getBrightness(color)
+  const minimumBrightness = 52
+
+  if (brightness >= minimumBrightness) return color
+
+  const ratio = (minimumBrightness - brightness) / (255 - brightness)
+
+  return {
+    red: Math.round(color.red + (255 - color.red) * ratio),
+    green: Math.round(color.green + (255 - color.green) * ratio),
+    blue: Math.round(color.blue + (255 - color.blue) * ratio),
+  }
+}
+
 // 以匿名跨域模式加载封面，允许后续 Canvas 读取像素
 function loadCoverImage(url: string): Promise<HTMLImageElement> {
   return new Promise((res, rej) => {
@@ -554,7 +772,10 @@ async function extractCoverPalette(url: string): Promise<CoverPalette> {
       const max = Math.max(red, green, blue)
       const min = Math.min(red, green, blue)
       const saturation = max === 0 ? 0 : (max - min) / max
-      if (alpha < 200 || max < 28 || max > 238 || saturation < 0.22) continue
+
+      const brightness = getBrightness({ red, green, blue })
+
+      if (alpha < 200 || brightness < 34 || max > 238 || saturation < 0.08) continue
 
       const color = {
         red: Math.floor(red / 32) * 32 + 16,
@@ -586,10 +807,13 @@ async function extractCoverPalette(url: string): Promise<CoverPalette> {
       if (colors.length === 3) break
     }
 
+    const primary = liftBackgroundColor(colors[0] || { red: 123, green: 92, blue: 255 })
+    const secondary = liftBackgroundColor(colors[1] || { red: 40, green: 120, blue: 201 })
+    const accent = liftBackgroundColor(colors[2] || { red: 66, green: 185, blue: 155 })
     return {
-      primary: toHexColor(colors[0] || { red: 123, green: 92, blue: 255 }),
-      secondary: toHexColor(colors[1] || { red: 40, green: 120, blue: 201 }),
-      accent: toHexColor(colors[2] || { red: 66, green: 185, blue: 155 }),
+      primary: toHexColor(primary),
+      secondary: toHexColor(secondary),
+      accent: toHexColor(accent),
     }
   } catch {
     return defaultCoverPalette
@@ -750,6 +974,53 @@ async function handleEnded() {
   await musicStore.playNext()
 }
 
+// 切歌时请求歌词，请求序号防止旧歌曲慢响应覆盖新歌曲
+watch(
+  () => musicStore.currentMusic?.id,
+  async (musicId) => {
+    const requestId = ++lyricRequestId
+
+    lyricLines.value = []
+    lyricsError.value = ''
+
+    if (!musicId) return
+
+    isLyricsLoading.value = true
+
+    try {
+      const lyrics = await getMusicLyric(musicId)
+      if (requestId !== lyricRequestId) return
+
+      const translations = new Map(
+        parseLrc(lyrics.translation).map((line) => [line.time, line.text]),
+      )
+
+      lyricLines.value = parseLrc(lyrics.lyric).map((line) => ({
+        ...line,
+        translation: translations.get(line.time),
+      }))
+    } catch (error) {
+      if (requestId === lyricRequestId) {
+        lyricsError.value = error instanceof Error ? error.message : '歌词加载失败'
+      }
+    } finally {
+      if (requestId === lyricRequestId) {
+        isLyricsLoading.value = false
+      }
+    }
+  },
+  { immediate: true },
+)
+
+/** 当前行变化或刚进入全屏时，将当前歌词定位到视觉中心。 */
+watch([currentLyricIndex, isPlayerFullscreen], async ([index, isFullscreen]) => {
+  if (!isFullscreen || index < 0) return
+
+  await nextTick()
+  scrollLyric()
+})
+
+// 监听当前音乐封面 URL 的变化
 watch(
   () => musicStore.currentMusic?.coverUrl,
   async (coverUrl) => {
@@ -1029,12 +1300,13 @@ watch(volume, (value) => {
   display: flex;
   flex-direction: column;
   isolation: isolate;
-  background: #080b12;
+  background: #10161c;
+  background: color-mix(in srgb, var(--cover-primary) 34%, #080b12);
   right: 0;
   top: 0;
   bottom: 0;
   z-index: 140;
-  width: min(410px, 100vw);
+  width: min(var(--player-width, 410px), 100vw);
   height: 100vh;
   padding: 22px;
   overflow: hidden;
@@ -1049,7 +1321,65 @@ watch(volume, (value) => {
   animation: music-panel-in 0.22s ease both;
 }
 
-.music-player::before {
+.music-player.is-snapping {
+  border-radius: 0;
+  transition: width 0.28s cubic-bezier(0.22, 0.8, 0.2, 1);
+}
+
+.music-resize-tab.is-snapping {
+  transition:
+    right 0.28s cubic-bezier(0.22, 0.8, 0.2, 1),
+    width 0.16s ease,
+    background 0.16s ease;
+}
+
+.music-player.is-fullscreen {
+  border: 0;
+  border-radius: 0;
+  padding: 40px 22px 22px 140px;
+}
+
+.music-resize-tab {
+  position: fixed;
+  z-index: 141;
+  top: 50%;
+  right: calc(var(--player-width) - 1px);
+  width: 36px;
+  height: 76px;
+  display: grid;
+  place-items: center;
+  padding: 0;
+  border: 1px solid rgba(168, 105, 255, 0.3);
+  border-right: 0;
+  border-radius: 10px 0 0 10px;
+  background: rgba(17, 14, 30, 0.94);
+  box-shadow: -8px 0 24px rgba(0, 0, 0, 0.2);
+  color: rgba(218, 189, 255, 0.88);
+  cursor: col-resize;
+  touch-action: none;
+  transform: translateY(-50%);
+  transition:
+    width 0.16s ease,
+    background 0.16s ease;
+  animation: music-resize-tab-in 0.24s 0.25s ease-out both;
+}
+
+.music-resize-tab:hover,
+.music-resize-tab.is-resizing {
+  width: 42px;
+}
+
+.music-resize-tab svg {
+  width: 18px;
+  height: 28px;
+  fill: none;
+  stroke: currentColor;
+  stroke-linecap: round;
+  stroke-width: 2;
+}
+
+.music-player::before,
+.music-mini-player::after {
   content: '';
   position: absolute;
   pointer-events: none;
@@ -1074,7 +1404,6 @@ watch(volume, (value) => {
   will-change: background-position, filter, opacity, transform;
   animation: cover-color-flow var(--flow-duration, 18s) ease-in-out infinite alternate;
 }
-
 .music-panel-header,
 .music-panel-body,
 .music-panel-tabs {
@@ -1098,6 +1427,18 @@ watch(volume, (value) => {
   }
 }
 
+@keyframes music-resize-tab-in {
+  from {
+    opacity: 0;
+    transform: translate(14px, -50%);
+  }
+
+  to {
+    opacity: 1;
+    transform: translate(0, -50%);
+  }
+}
+
 .music-panel-header {
   display: flex;
   align-items: center;
@@ -1115,6 +1456,114 @@ watch(volume, (value) => {
 
 .player-page {
   animation: player-page-in 0.18s ease both;
+}
+
+@media (min-width: 769px) {
+  .music-player.is-fullscreen .music-panel-body {
+    overflow: hidden;
+  }
+
+  .music-player.is-fullscreen .player-home {
+    height: 100%;
+    display: grid;
+    grid-template-columns: minmax(330px, 36%) minmax(0, 1fr);
+    gap: 48px;
+  }
+
+  .music-player.is-fullscreen .player-home-control {
+    width: min(100%, 415px);
+    min-width: 0;
+    justify-self: center;
+    padding: 8px 0 32px;
+    overflow-y: hidden;
+    overscroll-behavior: contain;
+  }
+
+  .music-player.is-fullscreen .panel-cover-wrap {
+    width: 100%;
+    max-width: none;
+    margin-top: 0;
+  }
+
+  .music-player.is-fullscreen .panel-track-text,
+  .music-player.is-fullscreen .progress-row,
+  .music-player.is-fullscreen .play-controls,
+  .music-player.is-fullscreen .volume-row {
+    width: 100%;
+  }
+
+  .music-player.is-fullscreen .playlist-section {
+    display: none;
+  }
+
+  .lyrics-panel {
+    min-width: 0;
+    display: flex;
+    align-items: center;
+    overflow: hidden;
+    padding: 56px 9vw 96px 24px;
+  }
+
+  .lyrics-track {
+    width: min(100%, 760px);
+    max-height: 100%;
+    padding: 42vh 0;
+    overflow-y: auto;
+    overscroll-behavior: contain;
+    scrollbar-width: none;
+  }
+
+  .lyrics-track::-webkit-scrollbar {
+    display: none;
+  }
+
+  .lyric-line {
+    margin: 0 0 28px;
+    color: var(--text-main);
+    font-size: 2.25rem;
+    font-weight: 700;
+    line-height: 1.2;
+    opacity: 0.22;
+    filter: blur(2px);
+    transform: scale(0.98);
+    transform-origin: left center;
+    transition:
+      opacity 0.28s ease,
+      filter 0.28s ease,
+      transform 0.28s ease;
+  }
+
+  .lyric-line.is-past {
+    opacity: 0.42;
+  }
+
+  .lyric-line.is-current {
+    opacity: 1;
+    filter: none;
+    transform: scale(1);
+  }
+
+  .lyric-line small {
+    display: block;
+    margin-top: 10px;
+    color: var(--text-muted);
+    font-size: 1rem;
+    font-weight: 500;
+  }
+
+  .lyrics-status {
+    width: 100%;
+    margin: 0;
+    color: var(--text-muted);
+    font-size: 1rem;
+    text-align: center;
+  }
+}
+
+@media (max-width: 768px) {
+  .lyrics-panel {
+    display: none;
+  }
 }
 
 .player-placeholder {
@@ -1156,6 +1605,79 @@ watch(volume, (value) => {
   border-top: 1px solid rgba(255, 255, 255, 0.08);
   background: rgba(8, 10, 16, 0.86);
   backdrop-filter: blur(18px);
+}
+
+.fullscreen-sidebar-hotspot,
+.fullscreen-collapse-tab {
+  display: none;
+}
+
+@media (min-width: 769px) {
+  .music-player.is-fullscreen .fullscreen-sidebar-hotspot {
+    position: absolute;
+    z-index: 3;
+    top: 0;
+    bottom: 0;
+    left: 0;
+    width: 24px;
+  }
+
+  .music-panel-tabs.is-fullscreen-sidebar {
+    z-index: 4;
+    top: 0;
+    bottom: 0;
+    left: 0;
+    right: auto;
+    width: 68px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 10px;
+    padding: 20px 10px;
+    border: 0;
+    border-right: 1px solid rgba(255, 255, 255, 0.1);
+    background: rgba(8, 10, 16, 0.82);
+    transform: translateX(-100%);
+    transition: transform 0.22s ease;
+  }
+
+  .fullscreen-sidebar-hotspot:hover + .music-panel-tabs.is-fullscreen-sidebar,
+  .music-panel-tabs.is-fullscreen-sidebar:hover {
+    transform: translateX(0);
+  }
+
+  .music-panel-tabs.is-fullscreen-sidebar .panel-tab-btn {
+    flex: 0 0 auto;
+    width: 48px;
+    height: 48px;
+  }
+
+  .fullscreen-collapse-tab {
+    position: absolute;
+    top: 50%;
+    right: -34px;
+    width: 34px;
+    height: 72px;
+    display: grid;
+    place-items: center;
+    padding: 0;
+    border: 1px solid rgba(168, 105, 255, 0.3);
+    border-left: 0;
+    border-radius: 0 10px 10px 0;
+    background: rgba(17, 14, 30, 0.94);
+    color: rgba(218, 189, 255, 0.88);
+    cursor: col-resize;
+    touch-action: none;
+  }
+
+  .fullscreen-collapse-tab svg {
+    width: 18px;
+    height: 28px;
+    fill: none;
+    stroke: currentColor;
+    stroke-linecap: round;
+    stroke-width: 2;
+  }
 }
 
 .panel-tab-btn {
@@ -1263,7 +1785,7 @@ watch(volume, (value) => {
   margin-top: 18px;
 }
 .panel-track-title {
-  font-weight: 400;
+  font-weight: 600;
 }
 
 .panel-track-text strong {
@@ -1277,9 +1799,10 @@ watch(volume, (value) => {
 .panel-track-text span {
   overflow: hidden;
   color: var(--text-muted);
-  font-size: 0.86rem;
+  font-size: 1rem;
   text-overflow: ellipsis;
   white-space: nowrap;
+  text-decoration: underline;
 }
 
 .play-controls svg {
@@ -1760,6 +2283,161 @@ watch(volume, (value) => {
 
   .music-mini-player {
     display: none;
+  }
+}
+
+@media (min-width: 769px) {
+  .music-player.is-fullscreen .play-controls {
+    align-items: center;
+    gap: 16px;
+    margin-top: 28px;
+  }
+
+  .music-player.is-fullscreen .control-btn,
+  .music-player.is-fullscreen .play-btn {
+    width: 54px;
+    min-width: 0;
+    height: 54px;
+    display: grid;
+    place-items: center;
+    padding: 0;
+    border: 0;
+    border-radius: 50%;
+    background: transparent;
+    color: rgba(255, 255, 255, 0.94);
+    transition:
+      transform 0.18s ease,
+      opacity 0.18s ease;
+  }
+
+  .music-player.is-fullscreen .play-btn {
+    width: 64px;
+    height: 64px;
+    color: #ffffff;
+  }
+
+  .music-player.is-fullscreen .control-btn:hover:not(:disabled),
+  .music-player.is-fullscreen .play-btn:hover:not(:disabled) {
+    background: rgba(255, 255, 255, 0.1);
+    transform: scale(1.06);
+  }
+
+  .music-player.is-fullscreen .control-btn:active:not(:disabled),
+  .music-player.is-fullscreen .play-btn:active:not(:disabled) {
+    transform: scale(0.92);
+  }
+
+  .music-player.is-fullscreen .control-btn svg {
+    width: 30px;
+    height: 30px;
+  }
+
+  .music-player.is-fullscreen .play-btn svg {
+    width: 36px;
+    height: 36px;
+  }
+
+  .music-player.is-fullscreen .progress-input {
+    appearance: none;
+    height: 6px;
+    border-radius: 999px;
+    background: linear-gradient(
+      to right,
+      rgba(255, 255, 255, 0.88) 0 var(--progress-ratio),
+      rgba(255, 255, 255, 0.28) var(--progress-ratio) 100%
+    );
+    cursor: pointer;
+  }
+
+  .music-player.is-fullscreen .progress-input::-webkit-slider-runnable-track {
+    height: 6px;
+    border-radius: 999px;
+    background: transparent;
+  }
+
+  .music-player.is-fullscreen .progress-input::-webkit-slider-thumb {
+    appearance: none;
+    width: 0;
+    height: 0;
+    margin-top: 3px;
+    border: 0;
+    border-radius: 50%;
+    background: #ffffff;
+    opacity: 0;
+    transition:
+      width 0.16s ease,
+      height 0.16s ease,
+      margin 0.16s ease,
+      opacity 0.16s ease;
+  }
+
+  .music-player.is-fullscreen .progress-input:hover::-webkit-slider-thumb {
+    width: 12px;
+    height: 12px;
+    margin-top: -3px;
+    opacity: 1;
+  }
+
+  .music-player.is-fullscreen .progress-input::-moz-range-track {
+    height: 6px;
+    border-radius: 999px;
+    background: rgba(255, 255, 255, 0.28);
+  }
+
+  .music-player.is-fullscreen .progress-input::-moz-range-progress {
+    height: 6px;
+    border-radius: 999px;
+    background: rgba(255, 255, 255, 0.88);
+  }
+
+  .music-player.is-fullscreen .volume-row {
+    grid-template-columns: 24px 1fr 24px;
+    gap: 14px;
+    margin-top: 30px;
+  }
+
+  .music-player.is-fullscreen .volume-row > svg,
+  .music-player.is-fullscreen .volume-max-icon {
+    width: 22px;
+    height: 22px;
+    color: rgba(255, 255, 255, 0.88);
+    fill: currentColor;
+  }
+
+  .music-player.is-fullscreen .volume-input {
+    appearance: none;
+    height: 6px;
+    border-radius: 999px;
+    background: linear-gradient(
+      to right,
+      rgba(255, 255, 255, 0.88) 0 var(--volume-ratio),
+      rgba(255, 255, 255, 0.28) var(--volume-ratio) 100%
+    );
+    cursor: pointer;
+  }
+
+  .music-player.is-fullscreen .volume-input::-webkit-slider-runnable-track {
+    height: 6px;
+    border-radius: 999px;
+    background: transparent;
+  }
+
+  .music-player.is-fullscreen .volume-input::-webkit-slider-thumb {
+    appearance: none;
+    width: 0;
+    height: 0;
+    margin-top: 3px;
+    border: 0;
+    opacity: 0;
+  }
+
+  .music-player.is-fullscreen .volume-input:hover::-webkit-slider-thumb {
+    width: 12px;
+    height: 12px;
+    margin-top: -3px;
+    border-radius: 50%;
+    background: #ffffff;
+    opacity: 1;
   }
 }
 </style>

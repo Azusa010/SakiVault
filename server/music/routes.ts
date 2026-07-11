@@ -1,6 +1,6 @@
 import { Router } from 'express'
 import { Readable } from 'node:stream'
-import { getPlayableUrl, getMusicStream } from './service'
+import { getPlayableUrl, getMusicStream, getMusicLyrics } from './service'
 
 export const musicRouter = Router()
 
@@ -92,7 +92,7 @@ musicRouter.get('/stream', async (req, res) => {
 
     audioStream.pipe(res)
 
-    
+
   } catch (error) {
     console.error('[music]代理音频流失败', error)
     if (!res.headersSent) {
@@ -102,4 +102,34 @@ musicRouter.get('/stream', async (req, res) => {
       })
     }
   }
+})
+
+musicRouter.get('/lyric',async(req,res)=>{
+  const id = String(req.query.id || '')
+
+  if(!id){
+    res.status(400).json({
+      ok:false,
+      message:'缺少音乐id'
+    })
+    return
+  }
+
+try {
+  const data = await getMusicLyrics(id)
+  res.json({
+    ok:true,
+    data
+  })
+} catch (error) {
+
+  console.error('[music]获取歌词失败',error);
+
+  res.status(500).json({
+    ok:false,
+    message:error instanceof Error ? error.message : String(error)
+  })
+
+}
+
 })

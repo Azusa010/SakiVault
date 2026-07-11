@@ -39,3 +39,13 @@ export interface MusicUrl {
   isPreview?: boolean
   proxyUrl?: string
 }
+
+// 单曲的普通歌词/翻译歌词/逐字歌词
+export interface MusicLyric {
+  id:string
+  lyric: string
+  translation: string | ''
+  wordLyric: string | ''
+}
+
+
