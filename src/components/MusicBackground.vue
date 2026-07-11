@@ -87,10 +87,12 @@ uniform float uMid;
 uniform float uTreble;
 uniform float uBeat;
 
+/* 生成稳定的伪随机值，用于碎光与流体纹理。 */
 float hash(vec2 point) {
   return fract(sin(dot(point, vec2(127.1, 311.7))) * 43758.5453123);
 }
 
+/* 生成二维平滑噪声，避免背景出现生硬的规则图案。 */
 float noise(vec2 point) {
   vec2 cell = floor(point);
   vec2 local = fract(point);
@@ -98,11 +100,16 @@ float noise(vec2 point) {
 
   return mix(
     mix(hash(cell), hash(cell + vec2(1.0, 0.0)), local.x),
-    mix(hash(cell + vec2(0.0, 1.0)), hash(cell + vec2(1.0, 1.0)), local.x),
+  mix(
+    hash(cell + vec2(0.0, 1.0)),
+   hash(cell + vec2(1.0, 1.0)),
+   local.x
+  ),
     local.y
   );
 }
 
+/* 叠加多层噪声，得到大范围且自然的流体流向。 */
 float fbm(vec2 point) {
   float value = 0.0;
   float amplitude = 0.5;
@@ -116,145 +123,164 @@ float fbm(vec2 point) {
   return value;
 }
 
-vec3 blurCover(vec2 uv, float radius) {
-  vec2 x = vec2(radius, 0.0);
-  vec2 y = vec2(0.0, radius);
+/* 创建柔和色团；softness 越大，边缘越柔和。 */
+float softBlob(vec2 point, vec2 center, float radius, float softness) {
+  float distanceToCenter = length(point - center);
 
-  vec3 color = texture2D(uCover, uv).rgb * 0.24;
-  color += texture2D(uCover, uv + x).rgb * 0.13;
-  color += texture2D(uCover, uv - x).rgb * 0.13;
-  color += texture2D(uCover, uv + y).rgb * 0.13;
-  color += texture2D(uCover, uv - y).rgb * 0.13;
-  color += texture2D(uCover, uv + x + y).rgb * 0.06;
-  color += texture2D(uCover, uv + x - y).rgb * 0.06;
-  color += texture2D(uCover, uv - x + y).rgb * 0.06;
-  color += texture2D(uCover, uv - x - y).rgb * 0.06;
+  return 1.0 - smoothstep(radius, radius + softness, distanceToCenter);
+}
 
-  return color;
+/* 创建一圈扩散波纹，避免中频只影响不可见的流动参数。 */
+float waveRing(vec2 point, vec2 center, float radius, float width) {
+  float distanceToCenter = length(point - center);
+  float ringDistance = abs(distanceToCenter - radius);
+
+  return 1.0 - smoothstep(width, width * 2.8, ringDistance);
 }
 
 void main() {
   vec2 aspect = vec2(uResolution.x / max(uResolution.y, 1.0), 1.0);
   vec2 point = (vUv - 0.5) * aspect;
+
   float flowTime = uTime * 0.14;
-  float audioPush = uBass * 0.32 + uBeat * 0.48;
+  float bassEnergy = smoothstep(0.12, 0.72, uBass);
+  float midEnergy = smoothstep(0.10, 0.68, uMid);
+  float trebleEnergy = smoothstep(0.08, 0.62, uTreble);
+  float beatEnergy = clamp(uBeat * 2.8, 0.0, 1.0);
+
+  /* 低频让整片背景的流向更有推力，节拍则增加瞬间扰动。 */
+  float audioPush = bassEnergy * 0.34 + beatEnergy * 0.26;
 
   vec2 largeFlow = vec2(
-    fbm(point * 1.15 + vec2(flowTime, -flowTime * 0.72)),
-    fbm(point * 1.15 + vec2(-flowTime * 0.66, flowTime * 0.81))
+    fbm(point * 1.12 + vec2(flowTime, -flowTime * 0.72)),
+    fbm(point * 1.12 + vec2(-flowTime * 0.66, flowTime * 0.81))
   ) - 0.5;
 
   vec2 mediumFlow = vec2(
-    fbm(point * 2.7 + vec2(-flowTime * 1.18, flowTime * 0.64)),
-    fbm(point * 2.7 + vec2(flowTime * 0.76, flowTime * 1.12))
+    fbm(point * 2.65 + vec2(-flowTime * 1.18, flowTime * 0.64)),
+    fbm(point * 2.65 + vec2(flowTime * 0.76, flowTime * 1.12))
   ) - 0.5;
 
   vec2 domain = point
-    + largeFlow * (0.54 + audioPush)
-    + mediumFlow * (0.16 + uMid * 0.26);
+    + largeFlow * (0.46 + audioPush)
+    + mediumFlow * (0.12 + midEnergy * 0.24);
 
-  float paletteFlowA = fbm(domain * 1.65 + vec2(flowTime * 0.35));
-  float paletteFlowB = fbm(domain * 2.45 + vec2(-flowTime * 0.28, flowTime * 0.52));
-  float paletteFlowC = fbm(domain * 3.15 - vec2(flowTime * 0.42, flowTime * 0.18));
+  /* 三种封面色仍按面积权重参与，只压缩极端的主色差异。 */
+  vec3 displayWeights = sqrt(max(uColorWeights, vec3(0.0)));
+  float displayWeightTotal =
+    displayWeights.x + displayWeights.y + displayWeights.z;
 
-  // 压缩封面颜色之间过大的面积差距。
-// 保留主次顺序，但避免黑色主色完全吞掉其他颜色。
-vec3 displayWeights = sqrt(max(uColorWeights, vec3(0.0)));
-float displayWeightTotal =
-  displayWeights.x
-  + displayWeights.y
-  + displayWeights.z;
+  displayWeights /= max(displayWeightTotal, 0.001);
 
-displayWeights /= max(displayWeightTotal, 0.001);
+  float primaryField = pow(smoothstep(0.23, 0.77, fbm(domain * 1.62)), 1.7);
+  float secondaryField = pow(
+    smoothstep(0.23, 0.77, fbm(domain * 2.42 + vec2(7.3, 2.1))),
+    1.7
+  );
+  float accentField = pow(
+    smoothstep(0.23, 0.77, fbm(domain * 3.08 - vec2(4.2, 9.6))),
+    1.7
+  );
 
-// 三种颜色分别使用独立噪声场，避免由同一阈值产生套娃色块。
-float primaryField = pow(
-  smoothstep(0.24, 0.76, paletteFlowA),
-  1.8
-);
-float secondaryField = pow(
-  smoothstep(0.24, 0.76, paletteFlowB),
-  1.8
-);
-float accentField = pow(
-  smoothstep(0.24, 0.76, paletteFlowC),
-  1.8
-);
+  vec3 colorInfluence = displayWeights * (
+    vec3(0.10) + vec3(primaryField, secondaryField, accentField) * 1.9
+  );
+  colorInfluence.z *= step(0.001, uColorWeights.z);
+  colorInfluence /= max(
+    colorInfluence.x + colorInfluence.y + colorInfluence.z,
+    0.001
+  );
 
-// 面积权重决定总体主次，独立噪声决定每种颜色出现的位置。
-vec3 colorInfluence = displayWeights * (
-  vec3(0.1)
-  + vec3(
-    primaryField,
-    secondaryField,
-    accentField
-  ) * 1.9
-);
+  vec3 color =
+    uColorA * colorInfluence.x * 0.80 +
+    uColorB * colorInfluence.y +
+    uColorC * colorInfluence.z * 1.05;
 
-// 没有第三种颜色时，彻底关闭第三色影响。
-colorInfluence.z *= step(0.001, uColorWeights.z);
+  /* 三个色团位置不同，防止画面退化成单个中心光圈。 */
+  vec2 blobCenterA = vec2(
+    sin(uTime * 0.11) * (0.28 + midEnergy * 0.10) - 0.22,
+    cos(uTime * 0.08) * (0.18 + midEnergy * 0.08) + 0.08
+  );
+  vec2 blobCenterB = vec2(
+    cos(uTime * 0.075 + 1.8) * (0.34 + midEnergy * 0.11) + 0.24,
+    sin(uTime * 0.10 + 0.9) * (0.22 + midEnergy * 0.08) - 0.12
+  );
+  vec2 blobCenterC = vec2(
+    sin(uTime * 0.09 + 3.6) * (0.22 + midEnergy * 0.09),
+    cos(uTime * 0.13 + 2.2) * (0.30 + midEnergy * 0.10) - 0.25
+  );
 
-float influenceTotal =
-  colorInfluence.x
-  + colorInfluence.y
-  + colorInfluence.z;
+  /* 低频决定常态呼吸，鼓点让三层色团同时短促扩张。 */
+  float beatExpansion = beatEnergy * 0.11;
+  float blobA = softBlob(
+    point + largeFlow * 0.13,
+    blobCenterA,
+    0.22 + bassEnergy * 0.17 + beatExpansion,
+    0.30
+  );
+  float blobB = softBlob(
+    point - mediumFlow * 0.15,
+    blobCenterB,
+    0.17 + bassEnergy * 0.14 + beatExpansion * 0.82,
+    0.25
+  );
+  float blobC = softBlob(
+    point + mediumFlow * 0.11,
+    blobCenterC,
+    0.13 + bassEnergy * 0.11 + beatExpansion * 0.68,
+    0.22
+  );
 
-colorInfluence /= max(influenceTotal, 0.001);
+  /* 色团用封面色交错叠加，避免只看到单一蓝色光圈。 */
+  color += uColorA * blobA * (0.10 + bassEnergy * 0.15);
+  color += uColorB * blobB * (0.11 + bassEnergy * 0.17);
+  color += uColorC * blobC * (0.10 + bassEnergy * 0.18);
 
-// 使用归一化影响力同时混合三种颜色，不再逐层覆盖。
-vec3 color =
-  uColorA * colorInfluence.x * 0.78
-  + uColorB * colorInfluence.y
-  + uColorC * colorInfluence.z * 1.04;
+  /* 中频驱动两道波纹：旋律明显时，背景会持续有推进感。 */
+  float ringA = waveRing(
+    point + largeFlow * 0.08,
+    blobCenterA,
+    0.31 + fract(uTime * 0.055) * (0.22 + midEnergy * 0.16),
+    0.018 + midEnergy * 0.016
+  );
+  float ringB = waveRing(
+    point - mediumFlow * 0.10,
+    blobCenterB,
+    0.24 + fract(uTime * 0.072 + 0.42) * (0.19 + midEnergy * 0.13),
+    0.014 + midEnergy * 0.014
+  );
+
+  color += uColorB * ringA * midEnergy * 0.13;
+  color += uColorC * ringB * midEnergy * 0.11;
+
+  /* 高频只放在色团边缘做碎光，保证律动清晰但不刺眼。 */
+  float blobEdges =
+    blobA * (1.0 - blobA) * 4.0 +
+    blobB * (1.0 - blobB) * 4.0 +
+    blobC * (1.0 - blobC) * 4.0;
+  float sparkleNoise = smoothstep(
+    0.67,
+    0.88,
+    fbm(point * 10.0 + vec2(uTime * 0.34, -uTime * 0.26))
+  );
+
+  color +=
+    mix(uColorB, uColorC, 0.56) *
+    blobEdges *
+    sparkleNoise *
+    trebleEnergy *
+    0.22;
+
+  /* 鼓点是全局协同的轻脉冲，不会把注意力锁死在一个点上。 */
+  color *= 1.0 + beatEnergy * 0.13;
 
   float vignette = 1.0 - smoothstep(0.16, 1.16, length(point));
-color *= 0.18 + vignette * 0.58;
-
-// 时间决定缓慢移动，中频只轻微扩大移动范围，不直接改变运动相位。
-vec2 reactiveCenter = vec2(
-  sin(uTime * 0.10) * (0.24 + uMid * 0.08),
-  cos(uTime * 0.085) * (0.16 + uMid * 0.06)
-);
-
-// 低频控制色块面积，节拍负责短促膨胀。
-float bassEnergy = smoothstep(0.18, 0.78, uBass);
-float beatEnergy = clamp(uBeat * 2.8, 0.0, 1.0);
-float reactiveRadius =
-  0.16
-  + bassEnergy * 0.18
-  + beatEnergy * 0.14;
-
-float reactiveDistance = length(point - reactiveCenter);
-float reactiveBlob = 1.0 - smoothstep(
-  reactiveRadius,
-  reactiveRadius + 0.24,
-  reactiveDistance
-);
-
-// 在第二、第三颜色之间缓慢切换，使闪动仍然来自封面颜色。
-vec3 reactiveColor = mix(
-  uColorB,
-  uColorC,
-  sin(uTime * 0.07) * 0.5 + 0.5
-);
-
-// 低频提供持续的“呼吸”，节拍提供更强的局部闪动。
-float reactiveStrength =
-  bassEnergy * 0.12
-  + beatEnergy * 0.52;
-
-color += reactiveColor * reactiveBlob * reactiveStrength;
-
-// 高频只在局部色块边缘产生轻微亮边。
-float reactiveEdge = reactiveBlob * (1.0 - reactiveBlob) * 4.0;
-color += reactiveColor * reactiveEdge * uTreble * 0.09;
-
-color = pow(max(color, vec3(0.0)), vec3(0.92));
+  color *= 0.19 + vignette * 0.62;
+  color = pow(max(color, vec3(0.0)), vec3(0.92));
 
   gl_FragColor = vec4(color, 1.0);
 }
 `
-
 // 计算 RGB 感知亮度 [0,255]
 function getBrightness({ red, green, blue }: RgbColor): number {
   return (red * 299 + green * 587 + blue * 114) / 1000
@@ -442,7 +468,7 @@ function resizeRenderer(): void {
 
   const width = Math.max(canvas.clientWidth, 1)
   const height = Math.max(canvas.clientHeight, 1)
-  const pixelRatio = Math.min(window.devicePixelRatio || 1,1)
+  const pixelRatio = Math.min(window.devicePixelRatio || 1, 1)
 
   renderer.setPixelRatio(pixelRatio)
   renderer.setSize(width, height, false)
@@ -615,7 +641,9 @@ onBeforeUnmount(disposeRenderer)
   display: block;
   width: 100%;
   height: 100%;
-  filter: saturate(1.1) contrast(1.03);
+  transform: scale(1.05);
+  filter: blur(18px) saturate(1.1) contrast(1.03);
+  will-change: filter, transform;
 }
 
 .music-background::after {

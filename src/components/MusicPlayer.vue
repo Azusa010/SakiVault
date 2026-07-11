@@ -444,7 +444,7 @@
                 class="playlist-item"
                 :class="{ 'is-current': musicStore.currentIndex === index }"
               >
-                <button type="button" class="playlist-item-main">
+                <button type="button" class="playlist-item-main" @click="musicStore.play(music)">
                   <img v-if="music.coverUrl" :src="music.coverUrl" alt="" class="playlist-cover" />
                   <img v-else src="../assets/pics/emptyCover.png" alt="" class="playlist-cover" />
                   <span class="playlist-index">{{ String(index + 1).padStart(2, '0') }}</span>
