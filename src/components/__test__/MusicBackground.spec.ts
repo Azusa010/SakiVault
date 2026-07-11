@@ -16,4 +16,17 @@ describe('MusicBackground', () => {
     expect(wrapper.get('canvas').attributes('aria-hidden')).toBe('true')
     expect(wrapper.classes()).toContain('is-playing')
   })
+
+  it('菲活动状态不标记为动态渲染背景',()=>{
+    const wrapper = mount(MusicBackground,{
+      props:{
+        coverUrl: 'https://example.com/cover.jpg',
+        audio: createAudioReactiveState(),
+        isPlaying: true,
+        isActive: true,
+      },
+    })
+
+    expect(wrapper.classes()).toContain('is-active')
+  })
 })

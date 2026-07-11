@@ -1,11 +1,11 @@
 <template>
-  <div class="music-background" :class="{ 'is-playing': isPlaying }">
+  <div class="music-background" :class="{ 'is-playing': isPlaying, 'is-active': isActive }">
     <canvas ref="canvasRef" aria-hidden="true"></canvas>
   </div>
 </template>
 
 <script setup lang="ts" name="MusicBackground">
-import { onBeforeUnmount, onMounted, ref, watch } from 'vue'
+import { onBeforeUnmount, onMounted, ref, render, watch } from 'vue'
 import * as THREE from 'three'
 import type { AudioReactiveState } from '@/utils/audioReactive'
 import { clamp } from '@/utils/audioReactive'
@@ -16,6 +16,7 @@ interface MusicBackgroundProps {
   coverUrl: string
   audio: AudioReactiveState
   isPlaying: boolean
+  isActive: boolean
 }
 
 const props = defineProps<MusicBackgroundProps>()
@@ -33,7 +34,6 @@ let currentTexture: THREE.Texture | null = null
 let fallbackTexture: THREE.DataTexture | null = null
 let lastFrameTime = 0
 let coverRequestId = 0
-let lastDebugTime = 0
 
 // 传入着色器的所有动态参数
 interface BackgroundUniforms {
@@ -442,16 +442,45 @@ function resizeRenderer(): void {
 
   const width = Math.max(canvas.clientWidth, 1)
   const height = Math.max(canvas.clientHeight, 1)
-  const pixelRatio = Math.min(window.devicePixelRatio || 1, 2)
+  const pixelRatio = Math.min(window.devicePixelRatio || 1,1)
 
   renderer.setPixelRatio(pixelRatio)
   renderer.setSize(width, height, false)
   uniforms.uResolution.value.set(width * pixelRatio, height * pixelRatio)
 }
 
+// 渲染一帧静态背景，用于暂停后动画保留当前画面
+function renderStaticFrame(): void {
+  if (!renderer || !scene || !camera) return
+  renderer.render(scene, camera)
+}
+
+// 开始背景动画循环
+function startRenderLoop(): void {
+  if (!props.isActive || animationFrameId !== null || !renderer) return
+
+  lastFrameTime = performance.now()
+  animationFrameId = requestAnimationFrame(renderFrame)
+}
+
+// 立即停止北京动画循环，释放GPU
+function stopRenderLoop(): void {
+  if (animationFrameId === null) return
+
+  cancelAnimationFrame(animationFrameId)
+  animationFrameId = null
+}
+
 // 每帧将音频状态写入 shader uniform；不会触发 Vue 重渲染。
 function renderFrame(timestamp: number): void {
   if (!renderer || !scene || !camera || !uniforms) return
+
+  // 非全屏或暂停时候不在预约下一帧
+  if (!props.isActive) {
+    animationFrameId = null
+    renderStaticFrame()
+    return
+  }
 
   const elapsedSeconds = clamp((timestamp - lastFrameTime) / 1000 || 0, 0, 0.1)
   lastFrameTime = timestamp
@@ -463,7 +492,7 @@ function renderFrame(timestamp: number): void {
     ((props.isPlaying ? props.audio.treble : 0) - uniforms.uTreble.value) * 0.08
   uniforms.uBeat.value += ((props.isPlaying ? props.audio.beat : 0) - uniforms.uBeat.value) * 0.2
 
-  renderer.render(scene, camera)
+  renderStaticFrame()
   animationFrameId = requestAnimationFrame(renderFrame)
 }
 
@@ -515,7 +544,8 @@ function initializeRenderer(): void {
   resizeObserver.observe(canvas)
 
   void updateCover(props.coverUrl)
-  animationFrameId = requestAnimationFrame(renderFrame)
+  renderStaticFrame()
+  startRenderLoop()
 }
 
 // 释放动画帧、纹理、材质和WebGL上下文
@@ -551,6 +581,19 @@ watch(
   () => props.coverUrl,
   (coverUrl) => {
     void updateCover(coverUrl)
+  },
+)
+
+watch(
+  () => props.isActive,
+  (isActive) => {
+    if (isActive) {
+      startRenderLoop()
+      return
+    }
+
+    stopRenderLoop()
+    renderStaticFrame()
   },
 )
 

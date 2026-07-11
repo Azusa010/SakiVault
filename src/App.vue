@@ -1,19 +1,19 @@
 <template>
   <div class="app">
     <MusicPlayer @fullscreen-change="handleFullscreenChange"></MusicPlayer>
-    
-    <template v-if="!isMusicFullscreen">
-      <NavBar />
+
+    <div v-show="!isMusicFullscreen">
+      <NavBar :performance-mode="isPerformanceMode" @toggle-performance="togglePerformanceMode" />
       <main class="main-content">
-        <PearBlossom></PearBlossom>
-        <MouseEffect></MouseEffect>
+        <PearBlossom v-if="!isPerformanceMode"></PearBlossom>
+        <MouseEffect v-if="!isPerformanceMode"></MouseEffect>
         <RouterView v-slot="{ Component }">
           <KeepAlive :include="['HomeView']">
             <Component :is="Component" />
           </KeepAlive>
         </RouterView>
       </main>
-    </template>
+    </div>
   </div>
 </template>
 
@@ -29,6 +29,27 @@ const isMusicFullscreen = ref(false)
 
 function handleFullscreenChange(isFullscreen: boolean) {
   isMusicFullscreen.value = isFullscreen
+}
+
+const PERFORMANCE_MODE_STORAGE_KEY = 'sakivault:performance-mode'
+
+function readPerformanceMode(): boolean {
+  try {
+    return window.localStorage.getItem(PERFORMANCE_MODE_STORAGE_KEY) === 'true'
+  } catch {
+    return false
+  }
+}
+
+const isPerformanceMode = ref(readPerformanceMode())
+
+function togglePerformanceMode(): void {
+  const nextMode = !isPerformanceMode.value
+
+  isPerformanceMode.value = nextMode
+  try {
+    window.localStorage.setItem(PERFORMANCE_MODE_STORAGE_KEY, String(nextMode))
+  } catch {}
 }
 </script>
 

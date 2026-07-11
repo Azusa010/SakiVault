@@ -16,9 +16,17 @@
         </template>
 
         <RouterLink v-else class="nav-login" to="/login">登录</RouterLink>
+
+        <button
+          type="button"
+          class="nav-performance-toggle"
+          :class="{ 'is-active': !performanceMode }"
+          @click="emit('toggle-performance')"
+        >
+          {{ performanceMode ? '性能' : '特效' }}
+        </button>
       </div>
     </div>
-
 
     <!-- 移动端顶部导航 -->
     <div class="mobile-topbar">
@@ -45,7 +53,6 @@
         </RouterLink>
       </div>
     </div>
-
 
     <!-- 移动端底部标签 -->
     <div class="mobile-bottom-tab">
@@ -96,8 +103,15 @@
 import { RouterLink } from 'vue-router'
 import { useAuthStore } from '@/stores/authStore'
 
+defineProps<{
+  performanceMode: boolean
+}>()
 /** 全站登录态，供桌面端和移动端导航共用 */
 const authStore = useAuthStore()
+
+const emit = defineEmits<{
+  'toggle-performance': []
+}>()
 </script>
 
 <style scoped>
@@ -203,7 +217,6 @@ const authStore = useAuthStore()
   font-size: 0.95rem;
   color: rgba(255, 255, 255, 0.9);
 }
-
 
 .nav-login {
   box-sizing: border-box;
@@ -312,4 +325,31 @@ const authStore = useAuthStore()
     color: var(--color-primary);
   }
 }
+
+.nav-performance-toggle {
+  padding: 7px 12px;
+  border: 1px solid rgba(255, 255, 255, 0.14);
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.06);
+  color: rgba(255, 255, 255, 0.72);
+  font: inherit;
+  font-size: 0.85rem;
+  cursor: pointer;
+  transition:
+    color 0.2s ease,
+    background-color 0.2s ease,
+    border-color 0.2s ease;
+}
+
+.nav-performance-toggle:hover {
+  color: #fff;
+  background: rgba(255, 255, 255, 0.12);
+}
+
+.nav-performance-toggle.is-active {
+  border-color: rgba(255, 143, 163, 0.7);
+  background: rgba(255, 107, 139, 0.2);
+  color: #ffd9e2;
+}
+
 </style>

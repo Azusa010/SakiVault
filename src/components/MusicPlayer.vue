@@ -128,7 +128,7 @@
         :cover-url="musicStore.currentMusic?.coverUrl || ''"
         :audio="backgroundAudio"
         :is-playing="isPlaying"
-        style="filter: blur(10px);"
+        :is-active="isPlayerFullscreen && isPlaying"
       />
       <!-- 播放器头部 -->
       <header class="music-panel-header">
@@ -159,7 +159,7 @@
         <section v-if="activePage === 'home'" class="player-page player-home">
           <div class="player-home-control">
             <!-- 专辑封面 -->
-            <div class="panel-cover-wrap">
+            <div class="panel-cover-wrap" :class="{'is-reduce':!isPlaying}" >
               <img
                 v-if="musicStore.currentMusic?.coverUrl"
                 :src="musicStore.currentMusic.coverUrl"
@@ -418,7 +418,86 @@
           <span>设置</span>
           <p>暂未开放</p>
         </section>
+
+        <!-- 全屏播放右侧抽屉，点击外部内容时关闭 -->
+        <div
+          v-if="isPlayerFullscreen && isFullscreenPlaylistOpen"
+          class="fullscreen-playlist-backdrop"
+          @click="isFullscreenPlaylistOpen = false"
+        />
+        <Transition name="fullscreen-playlist-drawer">
+          <section
+            v-if="isPlayerFullscreen && isFullscreenPlaylistOpen"
+            id="fullscreen-playlist"
+            class="fullscreen-playlist-popover"
+            @click.stop
+          >
+            <div class="fullscreen-playlist-header">
+              <h3>播放列表</h3>
+              <span>{{ musicStore.playlist.length }}</span>
+            </div>
+
+            <div v-if="musicStore.playlist.length > 0" class="fullscreen-playlist-list">
+              <div
+                v-for="(music, index) in musicStore.playlist"
+                :key="`${music.source}-${music.id}`"
+                class="playlist-item"
+                :class="{ 'is-current': musicStore.currentIndex === index }"
+              >
+                <button type="button" class="playlist-item-main">
+                  <img v-if="music.coverUrl" :src="music.coverUrl" alt="" class="playlist-cover" />
+                  <img v-else src="../assets/pics/emptyCover.png" alt="" class="playlist-cover" />
+                  <span class="playlist-index">{{ String(index + 1).padStart(2, '0') }}</span>
+
+                  <span class="playlist-text">
+                    <strong>{{ music.name }}</strong>
+                    <small>{{ formatArtists(music.artist) }}</small>
+                  </span>
+
+                  <svg
+                    v-if="musicStore.currentIndex === index"
+                    class="playlist-playing-icon"
+                    viewBox="0 0 24 24"
+                    aria-label="当前播放"
+                  >
+                    <path d="M5 9h3v6H5zM10.5 5h3v14h-3zM16 8h3v8h-3z" />
+                  </svg>
+                </button>
+
+                <button
+                  type="button"
+                  class="playlist-remove-btn"
+                  @click="musicStore.removeFromPlaylist(music)"
+                >
+                  <svg viewBox="0 0 24 24" aria-hidden="true">
+                    <path d="M3 6h18" />
+                    <path d="M8 6V4h8v2" />
+                    <path d="m19 6-1 14H6L5 6" />
+                    <path d="M10 11v5" />
+                    <path d="M14 11v5" />
+                  </svg>
+                </button>
+              </div>
+            </div>
+
+            <p v-else class="playlist-empty">从搜索页添加音乐到播放列表</p>
+          </section>
+        </Transition>
       </main>
+
+      <!-- 全屏模式下右下角列表开关 -->
+      <button
+        v-if="isPlayerFullscreen"
+        type="button"
+        class="fullscreen-playlist-toggle"
+        :class="{ 'is-active': isFullscreenPlaylistOpen }"
+        @click.stop="isFullscreenPlaylistOpen = !isFullscreenPlaylistOpen"
+      >
+        <svg viewBox="0 0 24 24" aria-hidden="true">
+          <path d="M5 6h14v2H5zM5 11h14v2H5zM5 16h9v2H5zM17 15v4l3-2z" />
+        </svg>
+        <span>{{ musicStore.playlist.length }}</span>
+      </button>
 
       <div v-if="isPlayerFullscreen" class="fullscreen-sidebar-hotspot" />
       <!-- 底部导航 -->
@@ -614,6 +693,8 @@ type PlayerPage = 'home' | 'search' | 'library' | 'settings'
 
 const activePage = ref<PlayerPage>('home')
 
+const isFullscreenPlaylistOpen = ref(false)
+
 // 打开完整播放器
 function openPanel() {
   isPanelOpen.value = true
@@ -656,12 +737,12 @@ function handleResizeStart(event: PointerEvent) {
 }
 
 // 根据指针移动距离更新右侧播放器宽度
+//拖动阶段只更新宽度，等松手后再切换全屏状态，避免布局提前跳变。
 function handleResizeMove(event: PointerEvent) {
   const minimunWidth = Math.min(360, window.innerWidth)
   const nextWidth = resizeStartWidth + resizeStartX - event.clientX
 
   panelWidth.value = Math.min(window.innerWidth, Math.max(minimunWidth, nextWidth))
-  updatePlayerFullscreen()
 }
 
 // 停止拖动并移处全局事务监听
@@ -669,17 +750,26 @@ function handleResizeEnd() {
   isResizing.value = false
   window.removeEventListener('pointermove', handleResizeMove)
 
-  const shouldSnapFullscreen = panelWidth.value / window.innerWidth >= 0.55
+  const widthRatio = panelWidth.value / window.innerWidth
 
-  if (!shouldSnapFullscreen) return
+  // 普通面板向左宽，超过55%宽度时，自动切换全屏模式
+  const shouldEnterFullscreen = !isPlayerFullscreen.value && widthRatio >= 0.55
 
-  isSnappingFullscreen.value = true
-  panelWidth.value = window.innerWidth
+  // 全屏向右拉，低于65&才退出全屏
+  const shouldKeepFullscreen = isPlayerFullscreen.value && widthRatio >= 0.65
 
-  window.setTimeout(() => {
-    isSnappingFullscreen.value = false
+  if (shouldEnterFullscreen || shouldKeepFullscreen) {
+    isSnappingFullscreen.value = true
+    panelWidth.value = window.innerWidth
     updatePlayerFullscreen()
-  }, 280)
+
+    window.setTimeout(() => {
+      isSnappingFullscreen.value = false
+    }, 280)
+    return
+  }
+
+  updatePlayerFullscreen()
 }
 
 // 显示迷你控制栏
@@ -1031,6 +1121,12 @@ watch(
 
 watch(volume, (value) => {
   if (audioRef.value) audioRef.value.volume = value
+})
+
+watch(isPlayerFullscreen, (isFullscreen) => {
+  if (!isFullscreen) {
+    isMiniVisible.value = false
+  }
 })
 </script>
 
@@ -1396,9 +1492,10 @@ watch(volume, (value) => {
   .music-player.is-fullscreen .player-home-control {
     width: min(100%, 415px);
     min-width: 0;
+    min-height: 0;
     justify-self: center;
     padding: 8px 0 32px;
-    overflow-y: hidden;
+    overflow-y: auto;
     overscroll-behavior: contain;
   }
 
@@ -1406,6 +1503,11 @@ watch(volume, (value) => {
     width: 100%;
     max-width: none;
     margin-top: 0;
+    transition: all 0.28s ease;
+  }
+
+  .music-player.is-fullscreen .panel-cover-wrap.is-reduce {
+    transform: scale(0.94);
   }
 
   .music-player.is-fullscreen .panel-track-text,
@@ -1542,7 +1644,8 @@ watch(volume, (value) => {
     top: 0;
     bottom: 0;
     left: 0;
-    width: 24px;
+    width: 48px;
+    display: block;
   }
 
   .music-panel-tabs.is-fullscreen-sidebar {
@@ -1560,7 +1663,7 @@ watch(volume, (value) => {
     border: 0;
     border-right: 1px solid rgba(255, 255, 255, 0.1);
     background: rgba(8, 10, 16, 0.82);
-    transform: translateX(-100%);
+    transform: translateX(calc(-100% - 34px));
     transition: transform 0.22s ease;
   }
 
@@ -1600,6 +1703,136 @@ watch(volume, (value) => {
     stroke: currentColor;
     stroke-linecap: round;
     stroke-width: 2;
+  }
+}
+.fullscreen-playlist-backdrop,
+.fullscreen-playlist-popover,
+.fullscreen-playlist-toggle {
+  display: none;
+}
+
+@media (min-width: 769px) {
+  /* 遮罩仅覆盖播放器内容区，点击后关闭右侧抽屉。 */
+  .music-player.is-fullscreen .fullscreen-playlist-backdrop {
+    position: absolute;
+    z-index: 5;
+    inset: 0;
+    display: block;
+  }
+
+  /* 抽屉与 music-panel-body 等高，从内容区右侧滑入。 */
+  .music-player.is-fullscreen .fullscreen-playlist-popover {
+    position: absolute;
+    z-index: 6;
+    top: 0;
+    right: 0;
+    bottom: 0;
+    width: min(440px, 52%);
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+    border-left: 1px solid rgba(255, 255, 255, 0.14);
+    background: rgba(13, 16, 24, 0.86);
+    box-shadow: -20px 0 48px rgba(0, 0, 0, 0.3);
+    backdrop-filter: blur(24px) saturate(1.15);
+  }
+
+  .fullscreen-playlist-drawer-enter-active,
+  .fullscreen-playlist-drawer-leave-active {
+    transition:
+      opacity 0.22s ease,
+      transform 0.22s cubic-bezier(0.22, 0.8, 0.2, 1);
+  }
+
+  .fullscreen-playlist-drawer-enter-from,
+  .fullscreen-playlist-drawer-leave-to {
+    opacity: 0;
+    transform: translateX(100%);
+  }
+
+  .fullscreen-playlist-header {
+    display: flex;
+    flex: 0 0 auto;
+    align-items: baseline;
+    justify-content: space-between;
+    padding: 18px 20px 14px;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+  }
+
+  .fullscreen-playlist-header h3 {
+    margin: 0;
+    color: var(--text-main);
+    font-size: 1rem;
+  }
+
+  .fullscreen-playlist-header span {
+    color: var(--text-disabled);
+    font-size: 0.75rem;
+  }
+
+  /* 只有歌曲区域滚动，标题始终保留在顶部。 */
+  .fullscreen-playlist-list {
+    min-height: 0;
+    flex: 1;
+    display: grid;
+    align-content: start;
+    gap: 5px;
+    overflow-y: auto;
+    padding: 10px 12px 16px;
+    overscroll-behavior: contain;
+  }
+
+  .fullscreen-playlist-popover .playlist-empty {
+    margin: auto 0;
+    padding: 30px 18px;
+  }
+
+  /* 右下角开关在遮罩上方，因此可再次点击关闭。 */
+  .music-player.is-fullscreen .fullscreen-playlist-toggle {
+    position: absolute;
+    z-index: 7;
+    right: 32px;
+    bottom: 24px;
+    width: 52px;
+    height: 52px;
+    display: grid;
+    grid-template-columns: 20px auto;
+    place-content: center;
+    align-items: center;
+    gap: 3px;
+    padding: 0;
+    border: 1px solid rgba(255, 255, 255, 0.16);
+    border-radius: 50%;
+    background: rgba(13, 16, 24, 0.72);
+    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.28);
+    color: rgba(255, 255, 255, 0.92);
+    cursor: pointer;
+    backdrop-filter: blur(16px);
+    transition:
+      transform 0.18s ease,
+      background-color 0.18s ease;
+  }
+
+  .fullscreen-playlist-toggle:hover,
+  .fullscreen-playlist-toggle.is-active {
+    background: rgba(119, 79, 187, 0.72);
+    transform: scale(1.06);
+  }
+
+  .fullscreen-playlist-toggle:active {
+    transform: scale(0.94);
+  }
+
+  .fullscreen-playlist-toggle svg {
+    width: 20px;
+    height: 20px;
+    fill: currentColor;
+  }
+
+  .fullscreen-playlist-toggle span {
+    align-self: end;
+    font-size: 0.64rem;
+    font-variant-numeric: tabular-nums;
   }
 }
 
@@ -1700,6 +1933,8 @@ watch(volume, (value) => {
   aspect-ratio: 1;
   object-fit: cover;
 }
+
+
 
 .panel-track-text {
   display: flex;
