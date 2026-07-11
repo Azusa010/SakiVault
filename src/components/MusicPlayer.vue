@@ -122,11 +122,14 @@
       :class="{ 'is-fullscreen': isPlayerFullscreen, 'is-snapping': isSnappingFullscreen }"
       :style="{
         '--player-width': `${panelWidth}px`,
-        '--cover-primary': coverPalette.primary,
-        '--cover-secondary': coverPalette.secondary,
-        '--cover-accent': coverPalette.accent,
       }"
     >
+      <MusicBackground
+        :cover-url="musicStore.currentMusic?.coverUrl || ''"
+        :audio="backgroundAudio"
+        :is-playing="isPlaying"
+        style="filter: blur(10px);"
+      />
       <!-- 播放器头部 -->
       <header class="music-panel-header">
         <!-- 品牌标识 -->
@@ -485,11 +488,13 @@
 </template>
 
 <script setup lang="ts" name="MusicPlayer">
-import { nextTick, ref, watch, onBeforeUnmount, computed } from 'vue'
+import { nextTick, ref, watch, onBeforeUnmount, computed, reactive } from 'vue'
 import { useMusicStore } from '@/stores/musicStore'
 import type { Music } from '@/types/music'
 import { getMusicLyric } from '@/api/music'
 import { parseLrc, type LyricLine } from '@/utils/lrc'
+import MusicBackground from './MusicBackground.vue'
+import { createAudioReactiveState, updateAudioReactiveState } from '@/utils/audioReactive'
 
 const musicStore = useMusicStore()
 
@@ -561,10 +566,8 @@ let lyricRequestId = 0
 
 const volume = ref(0.8)
 
-// 频谱能量，动态背景用
-const bassLevel = ref(0)
-const midLevel = ref(0)
-const trebleLevel = ref(0)
+// 新背景使用同一份响应式状态；下一步会由新节拍检测更新它。
+const backgroundAudio = reactive(createAudioReactiveState())
 
 type CoverPalette = {
   primary: string
@@ -666,7 +669,7 @@ function handleResizeEnd() {
   isResizing.value = false
   window.removeEventListener('pointermove', handleResizeMove)
 
-  const shouldSnapFullscreen = panelWidth.value / window.innerWidth >= 0.82
+  const shouldSnapFullscreen = panelWidth.value / window.innerWidth >= 0.55
 
   if (!shouldSnapFullscreen) return
 
@@ -820,47 +823,6 @@ async function extractCoverPalette(url: string): Promise<CoverPalette> {
   }
 }
 
-// 计算指定频段的平局能量
-function getBandEnergy(data: Uint8Array, startFrequency: number, endFrequency: number): number {
-  if (!audioContext) return 0
-
-  const nyquistFrequency = audioContext.sampleRate / 2
-  const startIndex = Math.floor((startFrequency / nyquistFrequency) * data.length)
-  const endIndex = Math.min(data.length, Math.ceil((endFrequency / nyquistFrequency) * data.length))
-
-  let total = 0
-  for (let index = startIndex; index < endIndex; index++) {
-    total += data[index] || 0
-  }
-  return total / Math.max(1, endIndex - startIndex) / 255
-}
-
-// 将实时频谱映射为CSS变量，避免每帧触发 Vue 组件重渲染
-function updatePanelAudioStyle() {
-  const panel = playerPanelRef.value
-  if (!panel) return
-
-  panel.style.setProperty('--cover-scale', `${1 + bassLevel.value * 0.12}`)
-  panel.style.setProperty('--cover-opacity', `${0.66 + bassLevel.value * 0.18}`)
-  panel.style.setProperty('--cover-blur', `${42 + bassLevel.value * 16}px`)
-  panel.style.setProperty('--cover-saturate', `${1.08 + midLevel.value * 0.42}`)
-  panel.style.setProperty('--cover-hue-shift', `${trebleLevel.value * 10}deg`)
-  panel.style.setProperty('--flow-duration', `${18 - midLevel.value * 8}s`)
-}
-
-// 暂停时回复背景的平静状态
-function resetPanelAudioStyle() {
-  const panel = playerPanelRef.value
-  if (!panel) return
-
-  panel.style.setProperty('--cover-scale', '1')
-  panel.style.setProperty('--cover-opacity', '0.64')
-  panel.style.setProperty('--cover-blur', '42px')
-  panel.style.setProperty('--cover-saturate', '1.08')
-  panel.style.setProperty('--cover-hue-shift', '0deg')
-  panel.style.setProperty('--flow-duration', '18s')
-}
-
 // 初始化音频分析节点
 function setupAudioAnalysis(): boolean {
   const audio = audioRef.value
@@ -872,8 +834,8 @@ function setupAudioAnalysis(): boolean {
   audioSourceNode = audioContext.createMediaElementSource(audio)
   analyserNode = audioContext.createAnalyser()
 
-  analyserNode.fftSize = 512
-  analyserNode.smoothingTimeConstant = 0.78
+  analyserNode.fftSize = 2048
+  analyserNode.smoothingTimeConstant = 0.45
 
   audioSourceNode.connect(analyserNode)
   analyserNode.connect(audioContext.destination)
@@ -881,7 +843,7 @@ function setupAudioAnalysis(): boolean {
   return true
 }
 
-// 读取频谱，持续更新低中高频能量
+// 读取频谱，并将低中高频和节拍脉冲更新到背景状态。
 async function startAudioAnalysis() {
   try {
     if (!setupAudioAnalysis() || !audioContext || !analyserNode) return
@@ -889,24 +851,37 @@ async function startAudioAnalysis() {
     await audioContext.resume()
 
     if (analysisFrameId !== null) return
-    const frequencyData = new Uint8Array(analyserNode.frequencyBinCount)
 
-    const updateAnalysis = () => {
-      if (!analyserNode) return
+    const context = audioContext
+    const analyser = analyserNode
+    const frequencyData = new Uint8Array(analyser.frequencyBinCount)
+    let lastAnalysisTimestamp = 0
 
-      analyserNode.getByteFrequencyData(frequencyData)
+    const updateAnalysis = (timestamp: number) => {
+      analyser.getByteFrequencyData(frequencyData)
 
-      bassLevel.value = bassLevel.value * 0.7 + getBandEnergy(frequencyData, 20, 180) * 0.22
-      midLevel.value = midLevel.value * 0.78 + getBandEnergy(frequencyData, 180, 2000) * 0.22
-      trebleLevel.value = trebleLevel.value * 0.78 + getBandEnergy(frequencyData, 2000, 8000) * 0.22
+      const elapsedSeconds =
+        lastAnalysisTimestamp === 0
+          ? 1 / 60
+          : Math.min((timestamp - lastAnalysisTimestamp) / 1000, 0.1)
+      lastAnalysisTimestamp = timestamp
 
-      updatePanelAudioStyle()
+      Object.assign(
+        backgroundAudio,
+        updateAudioReactiveState(
+          backgroundAudio,
+          frequencyData,
+          context.sampleRate,
+          elapsedSeconds,
+        ),
+      )
+
       analysisFrameId = requestAnimationFrame(updateAnalysis)
     }
 
-    updateAnalysis()
+    analysisFrameId = requestAnimationFrame(updateAnalysis)
   } catch (error) {
-    console.warn('[music]音频频谱初始化失败', error)
+    console.warn('[music] 音频频谱初始化失败', error)
   }
 }
 
@@ -917,10 +892,7 @@ function stopAudioAnalysis() {
     analysisFrameId = null
   }
 
-  bassLevel.value = 0
-  midLevel.value = 0
-  trebleLevel.value = 0
-  resetPanelAudioStyle()
+  Object.assign(backgroundAudio, createAudioReactiveState())
 }
 
 function handlePlay() {
@@ -1300,8 +1272,7 @@ watch(volume, (value) => {
   display: flex;
   flex-direction: column;
   isolation: isolate;
-  background: #10161c;
-  background: color-mix(in srgb, var(--cover-primary) 34%, #080b12);
+  background: #15191c;
   right: 0;
   top: 0;
   bottom: 0;
@@ -1378,65 +1349,17 @@ watch(volume, (value) => {
   stroke-width: 2;
 }
 
-.music-player::before,
 .music-mini-player::after {
   content: '';
   position: absolute;
   pointer-events: none;
 }
 
-.music-player::before {
-  inset: -36%;
-  z-index: 0;
-  background:
-    linear-gradient(128deg, var(--cover-primary) 0%, transparent 48%),
-    linear-gradient(236deg, var(--cover-secondary) 0%, transparent 54%),
-    linear-gradient(344deg, var(--cover-accent) 0%, transparent 48%);
-  background-size: 155% 155%;
-  background-position:
-    12% 18%,
-    82% 36%,
-    46% 88%;
-  filter: blur(var(--cover-blur, 42px)) saturate(var(--cover-saturate, 1.12))
-    hue-rotate(var(--cover-hue-shift, 0deg)) brightness(1.16);
-  opacity: var(--cover-opacity, 0.52);
-  transform: scale(var(--cover-scale, 1));
-  will-change: background-position, filter, opacity, transform;
-  animation: cover-color-flow var(--flow-duration, 18s) ease-in-out infinite alternate;
-}
 .music-panel-header,
 .music-panel-body,
 .music-panel-tabs {
   position: relative;
   z-index: 1;
-}
-
-@keyframes cover-color-flow {
-  from {
-    background-position:
-      12% 18%,
-      82% 36%,
-      46% 88%;
-  }
-
-  to {
-    background-position:
-      82% 70%,
-      18% 58%,
-      62% 12%;
-  }
-}
-
-@keyframes music-resize-tab-in {
-  from {
-    opacity: 0;
-    transform: translate(14px, -50%);
-  }
-
-  to {
-    opacity: 1;
-    transform: translate(0, -50%);
-  }
 }
 
 .music-panel-header {
