@@ -1,197 +1,133 @@
 # SakiVault
 
-SakiVault 是一个基于 Vue 3 + TypeScript 的番剧信息浏览与收藏管理应用。项目接入 Bangumi API，提供热门番剧浏览、番剧搜索、详情页信息展示、本地收藏、Bangumi Token 登录以及收藏同步等功能。
+> 一个面向动漫爱好者的桌面媒体中心：浏览番剧、同步收藏、按规则检索观看源，并在同一应用内管理音乐播放。
 
-这个项目的重点不是单纯展示列表，而是围绕“查找番剧 -> 查看详情 -> 管理收藏 -> 同步 Bangumi 收藏”的完整使用路径，练习真实 API 接入、前端状态管理、路由拆分、响应式界面和基础测试。
+SakiVault 不是静态展示页，而是一个基于 **Vue 3 + TypeScript + Electron** 构建并可打包为 Windows 安装程序的桌面应用。项目围绕真实的 Bangumi 数据、用户本地状态、受限的 Electron IPC 通信和桌面端发布流程实现完整体验。
 
-## 功能特性
+![Platform](https://img.shields.io/badge/platform-Windows-0078D4?style=flat-square)
+![Vue](https://img.shields.io/badge/Vue-3-42b883?style=flat-square)
+![Electron](https://img.shields.io/badge/Electron-43-47848F?style=flat-square)
+![TypeScript](https://img.shields.io/badge/TypeScript-6-3178C6?style=flat-square)
 
-- 首页展示热门番剧与轮播推荐，支持从首页快速进入搜索。
-- 搜索页支持关键词、年份、评分、标签筛选，并将筛选条件同步到 URL query。
-- 详情页使用嵌套路由拆分概览、吐槽、角色、评论、制作人员等内容。
-- 收藏功能支持“想看 / 在看 / 看过 / 搁置 / 抛弃”等状态，并持久化到 LocalStorage。
-- 登录页支持粘贴 Bangumi Access Token 获取用户信息。
-- 收藏同步支持从 Bangumi 拉取收藏，并将本地更新推送回 Bangumi。
-- 页面适配桌面端和移动端，收藏页使用书架式时间分组展示。
-- 使用 Vitest 覆盖组件、Store、Composable 的基础逻辑，使用 Playwright 做基础 E2E 测试。
+## 项目亮点
+
+- **桌面端交付**：自定义无边框标题栏、窗口控制 IPC、Hash 路由兼容 `file://` 安装包环境，并通过 electron-builder 生成 Windows NSIS 安装程序。
+- **完整番剧浏览链路**：接入 Bangumi API，覆盖首页推荐、搜索筛选、详情页、角色/评论/制作人员信息与收藏管理。
+- **本地收藏与 Bangumi 同步**：支持“想看、在看、看过、搁置、抛弃”等状态；本地持久化，并按更新时间处理与 Bangumi 的双向同步。
+- **可配置观看源**：读取本地 Kazumi 规则库，在 Electron 主进程中以隔离隐藏窗口完成来源检索、剧集解析与播放地址嗅探；搜索结果带缓存，避免重复请求。
+- **沉浸式音乐播放器**：封面取色、动态背景、音频频率响应、全屏播放界面与播放列表，并为低性能设备提供特效开关。
+- **桌面安全边界**：渲染进程不启用 Node，借助 preload + contextBridge 暴露最小化 API；主进程对可访问的 Bangumi Next 路径及观看源 URL 进行校验。
+
+## 功能一览
+
+| 模块 | 能力 |
+| --- | --- |
+| 番剧浏览 | 热门推荐、轮播、搜索、筛选、详情子页面 |
+| 收藏系统 | 本地收藏、状态管理、Bangumi Token 登录与同步 |
+| 动漫观看 | 多规则来源检测、可用性状态、剧集线路解析、视频播放 |
+| 音乐播放 | 播放控制、全屏模式、播放列表、音频响应式背景 |
+| 桌面体验 | 自定义标题栏、窗口控制、Windows 安装包、性能模式 |
+
+> 截图建议：在此补充首页、观看源选择页、全屏音乐播放器各一张截图，GitHub 与简历链接的展示效果会更完整。
+
+## 技术架构
+
+```text
+Vue Renderer
+├── Vue Router / Pinia / VueUse
+├── Bangumi API、收藏与音乐交互
+└── window.electronAPI（preload 最小暴露）
+          │ IPC
+Electron Main Process
+├── 窗口控制与系统代理网络请求
+├── Kazumi 本地规则读取与校验
+└── 隐藏窗口解析来源、剧集与媒体地址
+          │
+Bangumi API / 本地 KazumiRules / 外部观看来源
+```
 
 ## 技术栈
 
-| 技术 | 用途 |
+| 分类 | 技术 |
 | --- | --- |
-| Vue 3 | 页面与组件开发 |
-| TypeScript | 类型约束 |
-| Vite | 开发服务器与构建 |
-| Vue Router | 页面路由与详情页子路由 |
-| Pinia | 收藏、登录、同步状态管理 |
-| Axios | Bangumi API 请求 |
-| VueUse | 防抖、点击外部关闭、尺寸监听等组合式工具 |
-| Vitest | 单元测试 |
-| Playwright | E2E 测试 |
-| ESLint / Oxlint / Prettier | 代码检查与格式化 |
+| 前端 | Vue 3、TypeScript、Vite、Vue Router、Pinia |
+| 桌面端 | Electron、electron-builder、preload / IPC |
+| 数据与媒体 | Axios、Bangumi API、hls.js、Kazumi Rules |
+| 交互与视觉 | VueUse、Three.js、Web Audio API |
+| 工程质量 | Vitest、Playwright、ESLint、Oxlint、Prettier |
+
+## 本地开发
+
+### 环境要求
+
+- Node.js `^22.18.0 || >=24.12.0`
+- Windows（桌面端打包目标）
+
+### 安装与启动 Web 开发环境
+
+```bash
+npm install
+npm run dev
+```
+
+默认访问 `http://localhost:5173`。
+
+### 启动 Electron 开发环境
+
+先启动 Vite 开发服务器，再在另一终端执行：
+
+```bash
+npm run start
+```
+
+### 质量检查
+
+```bash
+npm run type-check
+npm run test:unit
+npm run test:e2e
+npm run lint
+```
+
+### 构建 Windows 安装包
+
+```bash
+npm run dist:win
+```
+
+安装包会输出至 `release/`。若构建提示 `EBUSY`，请先关闭正在运行的 SakiVault 进程，避免 `release/win-unpacked` 被占用。
 
 ## 项目结构
 
 ```text
 src/
-├── api/                  # Bangumi API 封装
-│   └── bangumi.ts
-├── components/           # 通用组件
-├── composables/          # 可复用组合式逻辑
-│   ├── useAnimeSearch.ts
-│   └── useFavorites.ts
-├── router/               # Vue Router 路由配置
-├── stores/               # Pinia 状态管理
-│   ├── authStore.ts
-│   ├── favStore.ts
-│   └── syncStore.ts
-├── types/                # TypeScript 类型定义
-├── views/                # 页面组件
-│   ├── HomeView.vue
-│   ├── SearchView.vue
-│   ├── DetailView.vue
-│   ├── FavoritesView.vue
-│   ├── LoginView.vue
-│   └── tabs/             # 详情页子标签页
-└── assets/               # 全局样式、字体、图标资源
+├── api/             # Bangumi 请求封装
+├── components/      # 番剧、观看、音乐、标题栏等可复用组件
+├── composables/     # 搜索与收藏等组合式逻辑
+├── router/          # Web / Electron 路由配置
+├── stores/          # 收藏、登录、同步状态
+├── utils/           # 音频响应、封面取色、规则校验与 XPath 解析
+└── views/           # 首页、搜索、详情、收藏、观看页
+
+electron/
+├── main.ts          # 主进程：窗口、IPC、规则解析与网络请求
+├── preload.cjs      # 安全暴露给渲染进程的桌面 API
+└── KazumiRules/     # 本地观看规则库（构建时作为额外资源复制）
 ```
 
-## 核心实现
+## 使用说明与边界
 
-### Bangumi API 封装
+- 番剧信息来自 Bangumi；登录 Token 仅保存在本地，用于读取和同步用户收藏。
+- 观看功能只解析用户本地规则所指向的公开网页，不托管、不提供任何视频内容或资源。
+- 桌面端网络请求默认遵循系统代理设置；若所在网络无法访问相关服务，请在代理客户端开启系统代理或使用可用网络。
 
-项目在 `src/api/bangumi.ts` 中统一管理 Bangumi 相关请求，包括热门条目、搜索、详情、评论、角色、制作人员、用户信息和用户收藏等接口。公开 API 走 `https://api.bgm.tv`，部分 next.bgm.tv 接口通过本地开发代理或 Vercel API 代理访问。
+## 简历项目描述
 
-### 搜索状态管理
+> 独立开发并交付 SakiVault 桌面番剧媒体中心，使用 Vue 3、TypeScript、Electron 构建 Windows 应用。接入 Bangumi API，实现搜索、详情、收藏及基于时间戳的双向同步；设计 preload/IPC 安全通信边界，在主进程完成本地规则解析、隐藏窗口抓取与视频流地址嗅探；实现音频响应式全屏播放器，并完成 electron-builder 安装包发布。
 
-搜索逻辑封装在 `src/composables/useAnimeSearch.ts` 中，负责维护关键词、年份、评分、标签、分页、加载状态和错误状态。页面层 `SearchView.vue` 负责把这些状态同步到 URL query，刷新页面或分享链接时可以保留筛选条件。
+## 后续方向
 
-### 收藏与同步
+- 提供规则库的增量更新与来源健康度统计。
+- 补充播放历史、断点续播与本地媒体库。
+- 扩展自动化测试覆盖，尤其是 Electron IPC 与打包后启动链路。
 
-本地收藏由 `src/stores/favStore.ts` 管理，数据写入 LocalStorage。收藏同步由 `src/stores/syncStore.ts` 负责，流程包括：
-
-- 分页拉取 Bangumi 用户收藏。
-- 将 Bangumi 收藏状态码映射成本地状态。
-- 通过更新时间比较本地和远端数据。
-- 远端较新时拉取更新，本地较新时推送到 Bangumi。
-- 记录同步统计，包括拉取、推送、冲突和跳过数量。
-
-### 详情页路由拆分
-
-详情页路径为 `/anime/:id`，并通过子路由拆分为：
-
-- `/anime/:id/overview`
-- `/anime/:id/comments`
-- `/anime/:id/characters`
-- `/anime/:id/reviews`
-- `/anime/:id/staff`
-
-这种结构让详情页主体信息和标签页内容分离，后续扩展新标签页时不会让单个页面组件持续膨胀。
-
-## 本地运行
-
-### 环境要求
-
-- Node.js `^22.18.0 || >=24.12.0`
-- npm
-
-### 安装依赖
-
-```bash
-npm install
-```
-
-### 启动开发服务器
-
-```bash
-npm run dev
-```
-
-默认访问地址：
-
-```text
-http://localhost:5173
-```
-
-### 构建
-
-```bash
-npm run build
-```
-
-### 预览构建结果
-
-```bash
-npm run preview
-```
-
-## 测试与质量检查
-
-### 类型检查
-
-```bash
-npm run type-check
-```
-
-### 单元测试
-
-```bash
-npm run test:unit
-```
-
-### E2E 测试
-
-```bash
-npm run test:e2e
-```
-
-### 代码检查
-
-```bash
-npm run lint
-```
-
-### 代码格式化
-
-```bash
-npm run format
-```
-
-## Bangumi 登录说明
-
-登录页使用 Bangumi Access Token 进行身份识别。Token 会保存在浏览器 LocalStorage 中，用于后续调用 `/v0/me` 和用户收藏相关接口。
-
-获取 Token：
-
-```text
-https://next.bgm.tv/demo/access-token
-```
-
-注意：当前项目适合个人学习和作品展示，不建议在公共设备上保存自己的 Bangumi Token。
-
-## 部署说明
-
-项目包含 Vercel 构建脚本：
-
-```bash
-npm run build:vercel
-```
-
-生产环境中，部分 next.bgm.tv 请求会走 `/api/proxy`。如果部署环境没有配置代理接口，需要补充对应的服务端代理逻辑，或者改用可直接访问的公开 API。
-
-## 项目亮点
-
-- 真实第三方 API 接入，而不是静态 mock 数据。
-- 搜索条件与 URL 同步，支持刷新保留状态。
-- 使用 Pinia 拆分收藏、登录、同步三个状态模块。
-- 收藏同步包含本地与远端时间戳比较，具备基本冲突判断思路。
-- 详情页使用嵌套路由组织复杂页面内容。
-- 有 Vitest 和 Playwright 测试基础，便于后续继续补覆盖率。
-
-## 后续优化方向
-
-- 完善 API 返回值类型，减少接口层的内联类型声明。
-- 给同步流程补充更完整的单元测试和异常场景测试。
-- 优化 Bangumi Token 的存储与失效处理。
-- 完善生产环境代理配置说明。
-- 补充项目截图、在线预览地址和核心流程动图。
