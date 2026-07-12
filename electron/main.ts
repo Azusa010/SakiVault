@@ -18,7 +18,17 @@ import { readFile } from 'node:fs/promises'
 const __dirname = path.dirname(fileURLToPath(import.meta.url))
 
 // kazumi本地目录
-const KAZUMI_RULES_DIR = path.join(__dirname, 'KazumiRules')
+const isDevelopment = !app.isPackaged
+
+const KAZUMI_RULES_DIR = isDevelopment
+  ? path.join(__dirname, 'KazumiRules')
+  : path.join(process.resourcesPath, 'KazumiRules')
+
+const PRELOAD_PATH = isDevelopment
+  ? path.join(__dirname, 'preload.cjs')
+  : path.join(__dirname, 'preload.cjs')
+
+const RENDERER_INDEX_PATH = path.join(__dirname, '../dist/index.html')
 
 async function readLocalRuleJson(fileName: string, errorMessage: string): Promise<unknown> {
   try {
@@ -501,12 +511,16 @@ app.on('ready', () => {
     webPreferences: {
       contextIsolation: true,
       nodeIntegration: false,
-      preload: path.join(__dirname, 'preload.cjs'),
+      preload: PRELOAD_PATH,
     },
   })
 
-  void mainWindow.loadURL('http://localhost:5173')
-  mainWindow.webContents.openDevTools()
+  if(isDevelopment) {
+    void mainWindow.loadURL('http://localhost:5173')
+    mainWindow.webContents.openDevTools()
+  }else{
+    void mainWindow.loadFile(RENDERER_INDEX_PATH)
+  }
 })
 
 app.on('window-all-closed', () => {

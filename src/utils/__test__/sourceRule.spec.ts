@@ -1,8 +1,8 @@
 import { describe, expect, it } from 'vitest'
-import { isKazumiSourceRule, buildSearchUrl } from '@/utils/sourceRule'
+import { isKazumiSourceRule, buildSearchUrl,type KazumiSourceRule } from '@/utils/sourceRule'
 
 /** 与 KazumiRules JSON 字段对齐的最小可解析规则。 */
-const validRule = {
+const validRule:KazumiSourceRule = {
   api: '1',
   type: 'anime',
   name: '演示来源',

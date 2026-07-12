@@ -3,7 +3,44 @@
   "version": "0.0.0",
   "private": true,
   "type": "module",
-  "main": "electron/main.ts",
+  "main": "dist-electron/main.mjs",
+  "productName": "SakiVault",
+  "build": {
+    "appId": "com.sakivault.app",
+    "directories": {
+      "output": "release",
+      "buildResources": "build"
+    },
+    "files": [
+      "dist/**",
+      "dist-electron/**",
+      {
+        "from": "electron/preload.cjs",
+        "to": "dist-electron/preload.cjs"
+      }
+    ],
+    "extraResources": [
+      {
+        "from": "electron/KazumiRules",
+        "to": "KazumiRules",
+        "filter": [
+          "**/*"
+        ]
+      }
+    ],
+    "win": {
+      "target": "nsis",
+      "icon": "build/icon.ico",
+      "artifactName": "${productName}-Setup-${version}.${ext}"
+    },
+    "nsis": {
+      "oneClick": false,
+      "allowToChangeInstallationDirectory": true,
+      "createDesktopShortcut": true,
+      "createStartMenuShortcut": true,
+      "shortcutName": "SakiVault"
+    }
+  },
   "scripts": {
     "dev": "vite",
     "build": "run-p type-check \"build-only {@}\" --",
@@ -11,6 +48,8 @@
     "test:unit": "vitest",
     "test:e2e": "playwright test",
     "build-only": "vite build",
+    "build:electron": "vite build --config vite.electron.config.ts",
+    "build:renderer:electron": "vite build --mode electron",
     "type-check": "vue-tsc --build",
     "lint": "run-s \"lint:*\"",
     "lint:oxlint": "oxlint . --fix",
@@ -20,7 +59,8 @@
     "server:dev": "tsx server/index.ts",
     "music-api:dev": "cd api-enhanced && node app.js",
     "dev:all": "run-p dev server:dev music-api:dev start",
-    "start": "electron --import=tsx ."
+    "start": "electron --import=tsx electron/main.ts",
+    "dist:win": "npm run type-check && npm run build:renderer:electron && npm run build:electron && electron-builder --win nsis"
   },
   "dependencies": {
     "@types/cors": "^2.8.19",
@@ -30,7 +70,6 @@
     "@vueuse/core": "^14.3.0",
     "axios": "^1.18.1",
     "cors": "^2.8.6",
-    "electron": "^43.1.0",
     "express": "^5.2.1",
     "hls.js": "^1.6.16",
     "https-proxy-agent": "^9.1.0",
@@ -51,6 +90,8 @@
     "@vue/eslint-config-typescript": "^14.8.0",
     "@vue/test-utils": "^2.4.11",
     "@vue/tsconfig": "^0.9.1",
+    "electron": "^43.1.0",
+    "electron-builder": "^26.15.3",
     "eslint": "^10.5.0",
     "eslint-config-prettier": "^10.1.8",
     "eslint-plugin-oxlint": "~1.69.0",

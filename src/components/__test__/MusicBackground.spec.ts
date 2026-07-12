@@ -10,6 +10,7 @@ describe('MusicBackground', () => {
         coverUrl: 'https://example.com/cover.jpg',
         audio: createAudioReactiveState(),
         isPlaying: true,
+        isActive: false,
       },
     })
 

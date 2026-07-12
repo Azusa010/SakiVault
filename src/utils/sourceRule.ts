@@ -69,5 +69,5 @@ export function isKazumiSourceRule(value: unknown): value is KazumiSourceRule {
 export function buildSearchUrl(rule: KazumiSourceRule, keyword: string): string {
   const encodedKeyword = encodeURIComponent(keyword.trim())
 
-  return rule.searchURL.replaceAll('@keyword', encodedKeyword)
+  return rule.searchURL.split('@keyword').join(encodedKeyword)
 }
