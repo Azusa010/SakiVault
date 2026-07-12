@@ -1,6 +1,10 @@
 /// <reference types="vite/client" />
 
-import type { KazumiSourceRule, KazumiRuleSummary } from '@/utils/sourceRule'
+import type {
+  KazumiSourceRule,
+  KazumiRuleSummary,
+  AnimeSourceCheckResult,
+} from '@/utils/sourceRule'
 import type {
   AnimeSourceSearchResult,
   AnimeSourceEpisodeRoute,
@@ -19,6 +23,8 @@ declare global {
         resultUrl: string,
       ) => Promise<AnimeSourceEpisodeRoute[]>
       resolveAnimeStream: (episodeUrl: string) => Promise<AnimeStreamSource>
+      checkAnimeSources: (keyword: string) => Promise<AnimeSourceCheckResult[]>
+      onAnimeSourceChecked: (listener: (result: AnimeSourceCheckResult) => void) => () => void
     }
   }
 }

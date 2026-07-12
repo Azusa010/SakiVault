@@ -41,6 +41,12 @@ export function isKazumiRuleSummary(value: unknown): value is KazumiRuleSummary 
   return isNonEmptyString(value.name) && isNonEmptyString(value.version)
 }
 
+// 单个来源对当前番剧的检测结果
+export interface AnimeSourceCheckResult extends KazumiRuleSummary {
+  status: 'available' | 'unavailable'
+  resultCount:number
+}
+
 // 判断未知值是否为普通对象
 function isRecord(value: unknown): value is Record<string, unknown> {
   return typeof value === 'object' && value !== null && !Array.isArray(value)

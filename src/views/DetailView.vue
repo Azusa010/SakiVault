@@ -75,6 +75,7 @@
     </div>
     <AnimeSourcePicker
       :open="isSourcePickerOpen"
+      :keyword="anime.title"
       @close="isSourcePickerOpen = false"
       @select="handleSourceSelect"
     />

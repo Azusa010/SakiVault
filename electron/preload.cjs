@@ -8,5 +8,13 @@ contextBridge.exposeInMainWorld('electronAPI', {
   listAnimeRules: () => ipcRenderer.invoke('watch:list-rules'),
   loadAnimeRule: (name) => ipcRenderer.invoke('watch:load-rule', name),
   loadAnimeEpisodes: (rule,resultUrl)=> ipcRenderer.invoke('watch:load-episodes',rule,resultUrl),
-  resolveAnimeStream: (episodeUrl)=> ipcRenderer.invoke('watch:resolve-stream',episodeUrl)
+  resolveAnimeStream: (episodeUrl)=> ipcRenderer.invoke('watch:resolve-stream',episodeUrl),
+  checkAnimeSources: (keyword)=> ipcRenderer.invoke('watch:check-sources',keyword),
+  onAnimeSourceChecked: (lisenter)=>{
+    const handler = (_event,result)=>lisenter(result)
+    ipcRenderer.on('watch:source-checked',handler)
+    return ()=>{
+      ipcRenderer.removeListener('watch:source-checked',handler)
+    }
+  }
 })

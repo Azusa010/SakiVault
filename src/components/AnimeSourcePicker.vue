@@ -32,17 +32,15 @@
           <p v-else-if="errorMessage" class="source-picker-message is-error">{{ errorMessage }}</p>
 
           <div v-else class="source-list">
-            <button
-              v-for="rule in rules"
-              :key="rule.name"
-              type="button"
-              class="source-item"
-              @click="emit('select', rule.name)"
-            >
-              <span>{{ rule.name }}</span>
-              <small>v{{ rule.version }}</small>
+            <button v-for="rule in rules" :key="rule.name" type="button" class="source-item" :class="`is-${getSourceState(rule.name)}`" :disabled="getSourceState(rule.name)!=='available'" @click="selectSource(rule.name)">
+              <span class="source-name">
+                <i class="status-light"></i>
+                {{ rule.name }}
+              </span>
+              <small>{{ getSourceHint(rule) }}</small>
             </button>
           </div>
+          <p v-if="isChecking" class="source-picker-message">正在检测来源{{ checkedCount }}/{{ rules.length }}</p>
         </section>
       </div>
     </Transition>
@@ -50,24 +48,41 @@
 </template>
 
 <script setup lang="ts" name="AnimeSourcePicker">
-import { computed, ref, watch } from 'vue'
-import type { KazumiRuleSummary } from '@/utils/sourceRule'
+import { computed, ref, watch ,onBeforeUnmount } from 'vue'
+import type { KazumiRuleSummary , AnimeSourceCheckResult} from '@/utils/sourceRule'
 
-const props = defineProps<{ open: boolean }>()
+type SourceState = AnimeSourceCheckResult['status'] | 'pending'
+
+const props = defineProps<{ open: boolean,keyword: string }>()
 
 const emit = defineEmits<{ close: []; select: [ruleName: string] }>()
 
 // 从KazumiRules 加载到的规则摘要
 const rules = ref<KazumiRuleSummary[]>([])
 
+// 每个来源当前的检测状态
+const sourceStates = ref<Record<string, SourceState>>({})
+
+// 每个来源的搜索结果数量
+const resultCounts = ref<Record<string, number>>({})
+
 // 规则库加载状态
 const isLoading = ref(false)
+
+// 批量检测状态
+const isChecking = ref(false)
 
 // 规则库加载失败信息
 const errorMessage = ref('')
 
 // 当前环境是否具有Electron观看能力
 const isDesktop = computed(() => window.electronAPI?.isDesktop === true)
+
+// 已完成检测来源数量
+const checkedCount = computed(()=>{
+  return Object.values(sourceStates.value).filter(state => state !== 'pending').length
+})
+
 
 //读取规则库列表
 async function loadRules(): Promise<void> {
@@ -84,13 +99,62 @@ async function loadRules(): Promise<void> {
     isLoading.value = false
   }
 }
+
+
+//返回来源当前状态，尚未收到结果pending
+function getSourceState(ruleName: string):SourceState{
+  return sourceStates.value[ruleName] ?? 'pending'
+}
+
+function getSourceHint(rule:KazumiRuleSummary):string{
+  const state = getSourceState(rule.name)
+
+  if(state === 'pending') return '检测中...'
+  if(state === 'available') return `找到${resultCounts.value[rule.name]??0}个结果`
+  return '未找到结果'
+}
+
+
+// 只有检测到才允许进入观看
+function selectSource(ruleName:string):void{
+  if(getSourceState(ruleName) === 'available') emit('select',ruleName)
+}
+
+// 初始化状态并启动并发检测
+async function checkSources():Promise<void>{
+  await loadRules()
+
+  if(!window.electronAPI || rules.value.length===0||!props.keyword) return
+  sourceStates.value = Object.fromEntries(rules.value.map(rule=>[rule.name,'pending']))
+  resultCounts.value = {}
+  errorMessage.value = ''
+  isChecking.value = true
+
+  const unsubscribe = window.electronAPI.onAnimeSourceChecked(result=>{
+    sourceStates.value[result.name] = result.status
+    resultCounts.value[result.name] = result.resultCount
+  })
+
+  try {
+    await window.electronAPI.checkAnimeSources(props.keyword)
+  } catch (error) {
+    errorMessage.value = error instanceof Error ? error.message : '来源检测失败'
+  }finally{
+    isChecking.value = false
+  }
+}
+
 // 弹层打开时再加载规则，避免详情页初始化时产生额外请求。
 watch(
   () => props.open,
   (open) => {
-    if (open) void loadRules()
+    if (open) void checkSources()
   },
 )
+
+onBeforeUnmount(()=>{
+
+})
 </script>
 
 <style scoped>
@@ -217,6 +281,66 @@ watch(
 @media (max-width: 520px) {
   .source-list {
     grid-template-columns: 1fr;
+  }
+}
+
+.source-item:disabled {
+  cursor: not-allowed;
+}
+
+.source-item.is-pending {
+  opacity: 0.65;
+}
+
+.source-item.is-unavailable {
+  opacity: 0.5;
+}
+
+.source-item.is-available {
+  border-color: rgba(68, 220, 145, 0.5);
+  background: rgba(68, 220, 145, 0.08);
+}
+
+.source-item.is-available:hover {
+  border-color: rgba(68, 220, 145, 0.9);
+  background: rgba(68, 220, 145, 0.16);
+}
+
+.source-name {
+  display: flex;
+  align-items: center;
+  min-width: 0;
+  gap: 8px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.status-light {
+  flex: 0 0 auto;
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: #8d96a8;
+}
+
+.is-available .status-light {
+  background: #44dc91;
+  box-shadow: 0 0 10px rgba(68, 220, 145, 0.8);
+}
+
+.is-unavailable .status-light {
+  background: #ff637d;
+  box-shadow: 0 0 10px rgba(255, 99, 125, 0.7);
+}
+
+.is-pending .status-light {
+  animation: source-checking 1s ease-in-out infinite alternate;
+}
+
+@keyframes source-checking {
+  to {
+    opacity: 0.35;
   }
 }
 </style>

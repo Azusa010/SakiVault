@@ -189,7 +189,7 @@ async function searchSource(): Promise<void> {
   }
 }
 
-/** 选择一个搜索结果，并解析它的线路与剧集。 */
+//选择一个搜索结果，并解析它的线路与剧集。
 async function selectSearchResult(result: AnimeSourceSearchResult): Promise<void> {
   if (!activeRule.value || !window.electronAPI) {
     return
@@ -235,7 +235,7 @@ async function playEpisode(episode: AnimeSourceEpisode): Promise<void> {
 function handlePlayerError(message: string): void {
   streamErrorMessage.value = message
 }
-/** 条目或来源变化后重新搜索。 */
+// 条目或来源变化后重新搜索。
 watch(
   [id, sourceName],
   () => {

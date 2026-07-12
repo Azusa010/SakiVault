@@ -1946,6 +1946,11 @@ watch(isPlayerFullscreen, (isFullscreen) => {
   border-radius: 18px;
   overflow: hidden;
   background: rgba(255, 255, 255, 0.04);
+  transition: all 0.28s ease;
+}
+
+.panel-cover-wrap.is-reduce {
+  transform: scale(0.94);
 }
 
 .panel-cover {

@@ -1,5 +1,5 @@
 import { app, BrowserWindow, ipcMain } from 'electron'
-import path, { resolve } from 'node:path'
+import path from 'node:path'
 import { fileURLToPath } from 'node:url'
 import { buildSearchUrl, isKazumiSourceRule, isKazumiRuleSummary } from '../src/utils/sourceRule.ts'
 import type {
@@ -7,7 +7,11 @@ import type {
   AnimeSourceEpisodeRoute,
   AnimeStreamSource,
 } from '../src/utils/xpathParser.ts'
-import type { KazumiRuleSummary, KazumiSourceRule } from '../src/utils/sourceRule.ts'
+import type {
+  KazumiRuleSummary,
+  KazumiSourceRule,
+  AnimeSourceCheckResult,
+} from '../src/utils/sourceRule.ts'
 // 获取当前Electron主进程文件夹所在目录
 const __dirname = path.dirname(fileURLToPath(import.meta.url))
 
@@ -256,20 +260,20 @@ function watchMediaRequest(window: BrowserWindow): {
 }
 
 // 加载单集播放页面，嗅探媒体请求并返回最终播放地址
-async function resolveAnimeStream(rawEpisodeUrl:unknown):Promise<AnimeStreamSource>
-{
-  if(typeof rawEpisodeUrl !== 'string' || !isHttpUrl(rawEpisodeUrl)) throw new Error("单集播放地址无效");
+async function resolveAnimeStream(rawEpisodeUrl: unknown): Promise<AnimeStreamSource> {
+  if (typeof rawEpisodeUrl !== 'string' || !isHttpUrl(rawEpisodeUrl))
+    throw new Error('单集播放地址无效')
 
   const sniffWindow = new BrowserWindow({
-    show:false,
-    webPreferences:{
-      contextIsolation:true,
-      nodeIntegration:false,
-      sandbox:true,
-      partition:'watch-sniff',
-    }
+    show: false,
+    webPreferences: {
+      contextIsolation: true,
+      nodeIntegration: false,
+      sandbox: true,
+      partition: 'watch-sniff',
+    },
   })
-  sniffWindow.webContents.setWindowOpenHandler(()=>({action:'deny'}))
+  sniffWindow.webContents.setWindowOpenHandler(() => ({ action: 'deny' }))
 
   const watcher = watchMediaRequest(sniffWindow)
 
@@ -287,11 +291,10 @@ async function resolveAnimeStream(rawEpisodeUrl:unknown):Promise<AnimeStreamSour
   } finally {
     watcher.dispose()
 
-    if(!sniffWindow.isDestroyed()){
+    if (!sniffWindow.isDestroyed()) {
       sniffWindow.destroy()
     }
   }
-
 }
 
 // 加载搜索页面，超时后终止本次请求。
@@ -356,7 +359,58 @@ async function searchAnime(rawRule: unknown, keyword: unknown): Promise<AnimeSou
   }
 }
 
-/** 注册页面可调用的观看相关 IPC。 */
+// 单个检测完成后推送给渲染进程的回调
+type SourceCheckReporter = (result: AnimeSourceCheckResult) => void
+
+/**
+ * 搜索所有来源规则，并发数量限制3个
+ *
+ */
+async function checkAnimeSources(
+  keyword: unknown,
+  reportResult: SourceCheckReporter,
+): Promise<AnimeSourceCheckResult[]> {
+  if (typeof keyword !== 'string' || !keyword.trim()) {
+    throw new Error('搜索关键词不能为空')
+  }
+
+  const summaries = await listKazumiRules()
+  const results: AnimeSourceCheckResult[] = []
+  let index = 0
+  // 从队列中取出一个规则并检测，直到没有剩余规则
+  async function runWorker(): Promise<void> {
+    while (index < summaries.length) {
+      const summary = summaries[index]
+      index++
+
+      try {
+        const rule = await loadKazumiRule(summary.name)
+        const searchResults = await searchAnime(rule, keyword)
+        const result: AnimeSourceCheckResult = {
+          ...summary,
+          status: searchResults.length > 0 ? 'available' : 'unavailable',
+          resultCount: searchResults.length,
+        }
+
+        results.push(result)
+        reportResult(result)
+      } catch {
+        const result: AnimeSourceCheckResult = {
+          ...summary,
+          status: 'unavailable',
+          resultCount: 0,
+        }
+        results.push(result)
+        reportResult(result)
+      }
+    }
+  }
+  const workerCount = Math.min(6, summaries.length)
+  await Promise.all(Array.from({ length: workerCount }, () => runWorker()))
+  return results
+}
+
+// 注册页面可调用的观看相关 IPC。
 function registerWatchIpc(): void {
   ipcMain.handle('watch:list-rules', async () => listKazumiRules())
 
@@ -372,8 +426,14 @@ function registerWatchIpc(): void {
     return searchAnime(rule, keyword)
   })
 
-  ipcMain.handle('watch:resolve-stream',async (_event,episodeUrl)=>{
+  ipcMain.handle('watch:resolve-stream', async (_event, episodeUrl) => {
     return resolveAnimeStream(episodeUrl)
+  })
+
+  ipcMain.handle('watch:check-sources',async (event,keyword)=>{
+    return checkAnimeSources(keyword,(result)=>{
+      if(!event.sender.isDestroyed()) event.sender.send('watch:source-checked',result)
+    })
   })
 }
 
