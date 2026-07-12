@@ -42,6 +42,32 @@ const bangumiPrivateClient = axios.create({
   },
 })
 
+type BangumiNextQuery = Record<string, string | number | boolean>
+
+/** Bangumi Next 热门条目接口的响应结构。 */
+interface BangumiTrendingSubjectsResponse {
+  data: Array<{
+    count: number
+    subject: {
+      id: number
+      nameCN?: string
+      name: string
+      rating?: { score?: number; rank?: number }
+      eps?: number
+    }
+  }>
+}
+
+/** 根据运行环境读取 Bangumi Next 数据：桌面端走 IPC，网页端走原代理。 */
+async function getBangumiNextData<T>(pathname: string, params?: BangumiNextQuery): Promise<T> {
+  if (window.electronAPI?.isDesktop && !isDev === true) {
+    return (await window.electronAPI.getBangumiNext(pathname, params)) as T
+  }
+
+  const response = await bangumiPrivateClient.get<T>(pathname, { params })
+  return response.data
+}
+
 // 获得番剧封面图片的 URL
 export function getAnimeImageUrl(
   subjectId: number,
@@ -88,17 +114,14 @@ export async function getPopularAnime(limit = 10) {
   )
 }
 
-
 // 获得热门条目
 export async function getHotSubjects(limit = 30) {
-  const response = await bangumiPrivateClient.get('/trending/subjects', {
-    params: {
-      type: 2,
-      limit,
-    },
+  const response = await getBangumiNextData<BangumiTrendingSubjectsResponse>('/trending/subjects', {
+    type: 2,
+    limit,
   })
 
-  return response.data.data.map(
+  return response.data.map(
     (item: {
       count: number
       subject: {
@@ -116,7 +139,6 @@ export async function getHotSubjects(limit = 30) {
         coverImage: getAnimeImageUrl(item.subject.id, 'large'),
         averageScore: score !== undefined ? Number(score.toFixed(1)) : undefined,
         rank: item.subject?.rating?.rank,
-
       }
     },
   )

@@ -1,9 +1,9 @@
-import { BrowserWindow as e, app as t, ipcMain as n } from "electron";
-import r from "node:path";
-import { fileURLToPath as i } from "node:url";
-import { readFile as a } from "node:fs/promises";
+import { BrowserWindow as e, app as t, ipcMain as n, net as r, session as i } from "electron";
+import a from "node:path";
+import { fileURLToPath as o } from "node:url";
+import { readFile as s } from "node:fs/promises";
 //#region src/utils/sourceRule.ts
-var o = [
+var c = [
 	"api",
 	"name",
 	"version",
@@ -15,46 +15,61 @@ var o = [
 	"chapterRoads",
 	"chapterResult"
 ];
-function s(e) {
-	return c(e) ? l(e.name) && l(e.version) : !1;
-}
-function c(e) {
-	return typeof e == "object" && !!e && !Array.isArray(e);
-}
 function l(e) {
-	return typeof e == "string" && e.trim().length > 0;
+	return u(e) ? d(e.name) && d(e.version) : !1;
 }
 function u(e) {
-	return !c(e) || e.type !== "anime" ? !1 : o.every((t) => l(e[t]));
+	return typeof e == "object" && !!e && !Array.isArray(e);
 }
-function d(e, t) {
+function d(e) {
+	return typeof e == "string" && e.trim().length > 0;
+}
+function f(e) {
+	return !u(e) || e.type !== "anime" ? !1 : c.every((t) => d(e[t]));
+}
+function p(e, t) {
 	let n = encodeURIComponent(t.trim());
 	return e.searchURL.split("@keyword").join(n);
 }
 //#endregion
 //#region electron/main.ts
-var f = r.dirname(i(import.meta.url)), p = !t.isPackaged, m = p ? r.join(f, "KazumiRules") : r.join(process.resourcesPath, "KazumiRules"), h = r.join(f, "preload.cjs"), g = r.join(f, "../dist/index.html");
-async function _(e, t) {
+var m = a.dirname(o(import.meta.url)), h = !t.isPackaged, g = h ? a.join(m, "KazumiRules") : a.join(process.resourcesPath, "KazumiRules"), _ = a.join(m, "preload.cjs"), v = a.join(m, "../dist/index.html"), y = /^\/(?:trending\/subjects|subjects\/\d+\/(?:comments|reviews|staffs\/persons))$/;
+function b(e) {
+	return typeof e != "object" || !e || Array.isArray(e) ? !1 : Object.values(e).every((e) => typeof e == "string" || typeof e == "number");
+}
+async function x(e, t) {
+	if (typeof e != "string" || !y.test(e)) throw Error("Bangumi Next API路径无效");
+	if (t !== void 0 && !b(t)) throw Error("Bangumi Next 查询参数无效");
+	let n = new URL(`https://next.bgm.tv/p1${e}`);
+	if (t !== void 0) for (let [e, r] of Object.entries(t)) n.searchParams.set(e, String(r));
+	let i = await r.fetch(n.toString(), { headers: { Accept: "application/json" } });
+	if (!i.ok) throw Error(`Bangumi Next 请求失败：${i.status}`);
+	return i.json();
+}
+function S() {
+	n.handle("bangumi:next-get", async (e, t, n) => x(t, n));
+}
+async function C(e, t) {
 	try {
-		let t = await a(r.join(m, e), "utf8");
+		let t = await s(a.join(g, e), "utf8");
 		return JSON.parse(t);
 	} catch {
 		throw Error(t);
 	}
 }
-var v = /* @__PURE__ */ new Map();
-async function y() {
-	let e = await _("index.json", "规则库索引加载失败");
+var w = /* @__PURE__ */ new Map();
+async function T() {
+	let e = await C("index.json", "规则库索引加载失败");
 	if (!Array.isArray(e)) throw Error("规则库索引格式无效");
-	return e.filter(s);
+	return e.filter(l);
 }
-async function b(e) {
+async function E(e) {
 	if (typeof e != "string" || !/^[a-zA-Z0-9_-]+$/.test(e)) throw Error("规则名称无效");
-	let t = await _(`${e}.json`, `本地规则 ${e} 读取失败`);
-	if (!u(t)) throw Error(`规则 ${e} 格式不兼容`);
+	let t = await C(`${e}.json`, `本地规则 ${e} 读取失败`);
+	if (!f(t)) throw Error(`规则 ${e} 格式不兼容`);
 	return t;
 }
-function x(e) {
+function D(e) {
 	try {
 		let t = new URL(e);
 		return t.protocol === "https:" || t.protocol === "http:";
@@ -62,7 +77,7 @@ function x(e) {
 		return !1;
 	}
 }
-function S(e) {
+function O(e) {
 	return `
     (() => {
       const rule = ${JSON.stringify(e)}
@@ -105,7 +120,7 @@ function S(e) {
     })()
   `;
 }
-function C(e) {
+function k(e) {
 	return `
     (() => {
       const rule = ${JSON.stringify(e)}
@@ -156,9 +171,9 @@ function C(e) {
     })()
   `;
 }
-async function w(t, n) {
-	if (!u(t)) throw Error("来源规则格式无效");
-	if (typeof n != "string" || !x(n)) throw Error("播放页面地址无效");
+async function A(t, n) {
+	if (!f(t)) throw Error("来源规则格式无效");
+	if (typeof n != "string" || !D(n)) throw Error("播放页面地址无效");
 	let r = new e({
 		show: !1,
 		webPreferences: {
@@ -169,14 +184,14 @@ async function w(t, n) {
 	});
 	r.webContents.setWindowOpenHandler(() => ({ action: "deny" }));
 	try {
-		await O(r, n);
-		let e = await r.webContents.executeJavaScript(C(t));
+		await P(r, n);
+		let e = await r.webContents.executeJavaScript(k(t));
 		return Array.isArray(e) ? e : [];
 	} finally {
 		r.isDestroyed() || r.destroy();
 	}
 }
-function T(e) {
+function j(e) {
 	try {
 		let t = new URL(e).pathname.toLowerCase();
 		return t.endsWith(".m3u8") || t.endsWith(".mp4") || t.endsWith(".webm");
@@ -184,14 +199,14 @@ function T(e) {
 		return !1;
 	}
 }
-function E(e) {
+function M(e) {
 	let t = e.webContents.session.webRequest, n, r = !1, i, a, o = new Promise((e, t) => {
 		i = e, a = t;
 	}), s = () => {
 		n && clearTimeout(n), t.onBeforeRequest(null);
 	};
 	return t.onBeforeRequest({ urls: ["*://*/*"] }, (t, n) => {
-		n({}), !(r || t.webContentsId !== e.webContents.id || !T(t.url)) && (r = !0, s(), i({
+		n({}), !(r || t.webContentsId !== e.webContents.id || !j(t.url)) && (r = !0, s(), i({
 			url: t.url,
 			referer: t.referrer || e.webContents.getURL()
 		}));
@@ -202,8 +217,8 @@ function E(e) {
 		dispose: s
 	};
 }
-async function D(t) {
-	if (typeof t != "string" || !x(t)) throw Error("单集播放地址无效");
+async function N(t) {
+	if (typeof t != "string" || !D(t)) throw Error("单集播放地址无效");
 	let n = new e({
 		show: !1,
 		webPreferences: {
@@ -214,14 +229,14 @@ async function D(t) {
 		}
 	});
 	n.webContents.setWindowOpenHandler(() => ({ action: "deny" }));
-	let r = E(n);
+	let r = M(n);
 	try {
-		return await O(n, t), await n.webContents.executeJavaScript("\n      document.querySelectorAll('video').forEach((video) => {\n        video.muted = true\n        video.play().catch(() => {})\n      })\n    "), await r.promise;
+		return await P(n, t), await n.webContents.executeJavaScript("\n      document.querySelectorAll('video').forEach((video) => {\n        video.muted = true\n        video.play().catch(() => {})\n      })\n    "), await r.promise;
 	} finally {
 		r.dispose(), n.isDestroyed() || n.destroy();
 	}
 }
-async function O(e, t) {
+async function P(e, t) {
 	let n;
 	try {
 		await Promise.race([e.loadURL(t), new Promise((e, t) => {
@@ -233,11 +248,11 @@ async function O(e, t) {
 		n && clearTimeout(n);
 	}
 }
-async function k(t, n) {
-	if (!u(t)) throw Error("来源规则格式无效");
+async function F(t, n) {
+	if (!f(t)) throw Error("来源规则格式无效");
 	if (typeof n != "string" || !n.trim()) throw Error("搜索关键词不能为空");
-	let r = d(t, n);
-	if (!x(r)) throw Error("规则中的搜索地址不是合法网页地址");
+	let r = p(t, n);
+	if (!D(r)) throw Error("规则中的搜索地址不是合法网页地址");
 	let i = new e({
 		show: !1,
 		webPreferences: {
@@ -248,33 +263,33 @@ async function k(t, n) {
 	});
 	i.webContents.setWindowOpenHandler(() => ({ action: "deny" }));
 	try {
-		await O(i, r);
-		let e = await i.webContents.executeJavaScript(S(t));
+		await P(i, r);
+		let e = await i.webContents.executeJavaScript(O(t));
 		return Array.isArray(e) ? e : [];
 	} finally {
 		i.isDestroyed() || i.destroy();
 	}
 }
-function A(e, t) {
+function I(e, t) {
 	return `${e.name}:${t.trim().toLowerCase()}`;
 }
-async function j(e, t) {
-	if (!u(e)) throw Error("来源规则格式无效");
+async function L(e, t) {
+	if (!f(e)) throw Error("来源规则格式无效");
 	if (typeof t != "string" || !t.trim()) throw Error("搜索关键词不能为空");
-	let n = A(e, t), r = v.get(n);
+	let n = I(e, t), r = w.get(n);
 	if (r) return r;
-	let i = await k(e, t);
-	return v.set(n, i), i;
+	let i = await F(e, t);
+	return w.set(n, i), i;
 }
-async function M(e, t) {
+async function R(e, t) {
 	if (typeof e != "string" || !e.trim()) throw Error("搜索关键词不能为空");
-	let n = await y(), r = [], i = 0;
+	let n = await T(), r = [], i = 0;
 	async function a() {
 		for (; i < n.length;) {
 			let a = n[i];
 			i++;
 			try {
-				let n = await j(await b(a.name), e), i = {
+				let n = await L(await E(a.name), e), i = {
 					...a,
 					status: n.length > 0 ? "available" : "unavailable",
 					resultCount: n.length
@@ -293,7 +308,7 @@ async function M(e, t) {
 	let o = Math.min(6, n.length);
 	return await Promise.all(Array.from({ length: o }, () => a())), r;
 }
-function N() {
+function z() {
 	n.on("window:minimize", (t) => {
 		e.fromWebContents(t.sender)?.minimize();
 	}), n.on("window:toggle-maximize", (t) => {
@@ -309,13 +324,13 @@ function N() {
 		e.fromWebContents(t.sender)?.close();
 	});
 }
-function P() {
-	n.handle("watch:list-rules", async () => y()), n.handle("watch:load-rule", async (e, t) => b(t)), n.handle("watch:load-episodes", async (e, t, n) => w(t, n)), n.handle("watch:search", async (e, t, n) => j(t, n)), n.handle("watch:resolve-stream", async (e, t) => D(t)), n.handle("watch:check-sources", async (e, t) => M(t, (t) => {
+function B() {
+	n.handle("watch:list-rules", async () => T()), n.handle("watch:load-rule", async (e, t) => E(t)), n.handle("watch:load-episodes", async (e, t, n) => A(t, n)), n.handle("watch:search", async (e, t, n) => L(t, n)), n.handle("watch:resolve-stream", async (e, t) => N(t)), n.handle("watch:check-sources", async (e, t) => R(t, (t) => {
 		e.sender.isDestroyed() || e.sender.send("watch:source-checked", t);
 	}));
 }
-t.on("ready", () => {
-	P(), N();
+t.on("ready", async () => {
+	await i.defaultSession.setProxy({ mode: "system" }), B(), S(), z();
 	let t = new e({
 		frame: !1,
 		backgroundColor: "#0b0e14",
@@ -327,10 +342,10 @@ t.on("ready", () => {
 		webPreferences: {
 			contextIsolation: !0,
 			nodeIntegration: !1,
-			preload: h
+			preload: _
 		}
 	});
-	p ? (t.loadURL("http://localhost:5173"), t.webContents.openDevTools()) : t.loadFile(g);
+	h ? (t.loadURL("http://localhost:5173"), t.webContents.openDevTools()) : t.loadFile(v);
 }), t.on("window-all-closed", () => {
 	process.platform !== "darwin" && t.quit();
 });

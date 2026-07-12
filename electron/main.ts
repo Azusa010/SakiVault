@@ -1,4 +1,4 @@
-import { app, BrowserWindow, ipcMain } from 'electron'
+import { app, BrowserWindow, ipcMain, net, session } from 'electron'
 import path from 'node:path'
 import { fileURLToPath } from 'node:url'
 import { buildSearchUrl, isKazumiSourceRule, isKazumiRuleSummary } from '../src/utils/sourceRule.ts'
@@ -29,6 +29,54 @@ const PRELOAD_PATH = isDevelopment
   : path.join(__dirname, 'preload.cjs')
 
 const RENDERER_INDEX_PATH = path.join(__dirname, '../dist/index.html')
+
+// 允许桌面端请求的Bangumi Next API地址
+const BANGUMI_NEXT_PATH_PATTERN =
+  /^\/(?:trending\/subjects|subjects\/\d+\/(?:comments|reviews|staffs\/persons))$/
+
+type BangumiNextQuery = Record<string, string | number | boolean>
+
+function isBangumiNextQuery(value: unknown): value is BangumiNextQuery {
+  if (typeof value !== 'object' || value === null || Array.isArray(value)) return false
+
+  return Object.values(value).every((item) => typeof item === 'string' || typeof item === 'number')
+}
+
+// 在主进程请求 Bangumi Next
+async function fetchBangumiNext(pathname: unknown, query: unknown): Promise<unknown> {
+  if (typeof pathname !== 'string' || !BANGUMI_NEXT_PATH_PATTERN.test(pathname)) {
+    throw new Error('Bangumi Next API路径无效')
+  }
+
+  if (query !== undefined && !isBangumiNextQuery(query)) {
+    throw new Error('Bangumi Next 查询参数无效')
+  }
+
+  const requestUrl = new URL(`https://next.bgm.tv/p1${pathname}`)
+
+  if (query !== undefined) {
+    for (const [key, value] of Object.entries(query)) {
+      requestUrl.searchParams.set(key, String(value))
+    }
+  }
+
+  const response = await net.fetch(requestUrl.toString(), {
+    headers: { Accept: 'application/json' },
+  })
+
+  if (!response.ok) {
+    throw new Error(`Bangumi Next 请求失败：${response.status}`)
+  }
+
+  return response.json()
+}
+
+// 注册渲染进程可调用的Bangumi Next IPC
+function registerBangumiIpc(): void {
+  ipcMain.handle('bangumi:next-get', async (_event, pathname, query) => {
+    return fetchBangumiNext(pathname, query)
+  })
+}
 
 async function readLocalRuleJson(fileName: string, errorMessage: string): Promise<unknown> {
   try {
@@ -496,8 +544,10 @@ function registerWatchIpc(): void {
   })
 }
 
-app.on('ready', () => {
+app.on('ready', async () => {
+  await session.defaultSession.setProxy({ mode: 'system' })
   registerWatchIpc()
+  registerBangumiIpc()
   registerWindowControlsIpc()
 
   const mainWindow = new BrowserWindow({
@@ -515,10 +565,10 @@ app.on('ready', () => {
     },
   })
 
-  if(isDevelopment) {
+  if (isDevelopment) {
     void mainWindow.loadURL('http://localhost:5173')
     mainWindow.webContents.openDevTools()
-  }else{
+  } else {
     void mainWindow.loadFile(RENDERER_INDEX_PATH)
   }
 })

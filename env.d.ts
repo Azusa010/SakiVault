@@ -18,6 +18,10 @@ declare global {
       minimizeWindow: () => void
       toggleMaximizeWindow: () => void
       closeWindow: () => void
+      getBangumiNext: (
+        pathname: string,
+        query?: Record<string, string | number | boolean>,
+      ) => Promise<unknown>
       searchAnime: (rule: KazumiSourceRule, keyword: string) => Promise<AnimeSourceSearchResult[]>
       listAnimeRules: () => Promise<KazumiRuleSummary[]>
       loadAnimeRule: (name: string) => Promise<KazumiSourceRule>
