@@ -12,19 +12,29 @@ import type {
   KazumiSourceRule,
   AnimeSourceCheckResult,
 } from '../src/utils/sourceRule.ts'
+import { readFile } from 'node:fs/promises'
+
 // 获取当前Electron主进程文件夹所在目录
 const __dirname = path.dirname(fileURLToPath(import.meta.url))
 
-// KazumiRules 的公开 Raw地址
-const KAZUMI_RULES_BASE_URL = 'https://raw.githubusercontent.com/Predidit/KazumiRules/main'
+// kazumi本地目录
+const KAZUMI_RULES_DIR = path.join(__dirname, 'KazumiRules')
+
+async function readLocalRuleJson(fileName: string, errorMessage: string): Promise<unknown> {
+  try {
+    const content = await readFile(path.join(KAZUMI_RULES_DIR, fileName), 'utf8')
+    return JSON.parse(content) as unknown
+  } catch {
+    throw new Error(errorMessage)
+  }
+}
+
+// 搜索结果缓存
+const sourceSearchCache = new Map<string, AnimeSourceSearchResult[]>()
 
 //获取并检验规则库索引
 async function listKazumiRules(): Promise<KazumiRuleSummary[]> {
-  const response = await fetch(`${KAZUMI_RULES_BASE_URL}/index.json`)
-
-  if (!response.ok) throw new Error('规则库索引加载失败')
-
-  const data: unknown = await response.json()
+  const data: unknown = await readLocalRuleJson('index.json', '规则库索引加载失败')
 
   if (!Array.isArray(data)) throw new Error('规则库索引格式无效')
 
@@ -37,14 +47,8 @@ async function loadKazumiRule(name: unknown): Promise<KazumiSourceRule> {
     throw new Error('规则名称无效')
   }
 
-  const response = await fetch(`${KAZUMI_RULES_BASE_URL}/${name}.json`)
-
-  if (!response.ok) throw new Error(`规则${name}加载失败`)
-
-  const data: unknown = await response.json()
-
-  if (!isKazumiSourceRule(data)) throw new Error(`规则${name}格式不兼容`)
-
+  const data = await readLocalRuleJson(`${name}.json`, `本地规则 ${name} 读取失败`)
+  if (!isKazumiSourceRule(data)) throw new Error(`规则 ${name} 格式不兼容`)
   return data
 }
 
@@ -359,6 +363,30 @@ async function searchAnime(rawRule: unknown, keyword: unknown): Promise<AnimeSou
   }
 }
 
+function createSearchCacheKey(rule: KazumiSourceRule, keyword: string): string {
+  return `${rule.name}:${keyword.trim().toLowerCase()}`
+}
+
+async function searchAnimeWithCache(
+  rawRule: unknown,
+  keyword: unknown,
+): Promise<AnimeSourceSearchResult[]> {
+  if (!isKazumiSourceRule(rawRule)) {
+    throw new Error('来源规则格式无效')
+  }
+  if (typeof keyword !== 'string' || !keyword.trim()) {
+    throw new Error('搜索关键词不能为空')
+  }
+  const cacheKey = createSearchCacheKey(rawRule, keyword)
+  const cachedResults = sourceSearchCache.get(cacheKey)
+  if (cachedResults) {
+    return cachedResults
+  }
+  const results = await searchAnime(rawRule, keyword)
+  sourceSearchCache.set(cacheKey, results)
+  return results
+}
+
 // 单个检测完成后推送给渲染进程的回调
 type SourceCheckReporter = (result: AnimeSourceCheckResult) => void
 
@@ -385,7 +413,7 @@ async function checkAnimeSources(
 
       try {
         const rule = await loadKazumiRule(summary.name)
-        const searchResults = await searchAnime(rule, keyword)
+        const searchResults = await searchAnimeWithCache(rule, keyword)
         const result: AnimeSourceCheckResult = {
           ...summary,
           status: searchResults.length > 0 ? 'available' : 'unavailable',
@@ -423,16 +451,16 @@ function registerWatchIpc(): void {
   })
 
   ipcMain.handle('watch:search', async (_event, rule, keyword) => {
-    return searchAnime(rule, keyword)
+    return searchAnimeWithCache(rule, keyword)
   })
 
   ipcMain.handle('watch:resolve-stream', async (_event, episodeUrl) => {
     return resolveAnimeStream(episodeUrl)
   })
 
-  ipcMain.handle('watch:check-sources',async (event,keyword)=>{
-    return checkAnimeSources(keyword,(result)=>{
-      if(!event.sender.isDestroyed()) event.sender.send('watch:source-checked',result)
+  ipcMain.handle('watch:check-sources', async (event, keyword) => {
+    return checkAnimeSources(keyword, (result) => {
+      if (!event.sender.isDestroyed()) event.sender.send('watch:source-checked', result)
     })
   })
 }
