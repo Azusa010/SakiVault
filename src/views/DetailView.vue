@@ -34,33 +34,50 @@
         <RatingChart :rating="anime?.rating" class="rating-chart" />
       </div>
       <div class="mobile-wrapper-spacer"></div>
-      <div class="follor-wrapper" ref="folloWrapperRef">
-        <button class="fav-btn" @click="clickBtn($event)" ref="btnRef">
-          <span
-            v-for="p in particles"
-            :key="p.id"
-            class="particle"
-            :style="{ left: `${p.x}px`, top: `${p.y}px`, '--tx': `${p.tx}px`, '--ty': `${p.ty}px` }"
-          ></span>
-          <span :class="`iconfont ${currentIcon}`"></span>
-          {{ followStatus }}
-        </button>
-        <Transition name="dropdown">
-          <div class="dropdown-menu" v-if="isDropdownOpen">
-            <div
-              class="dropdown-item"
-              v-for="(v, index) in STATUS_OPTIONS"
-              :key="v.value"
-              @click="selectStatus({ value: v.value as CollectionStatus, label: v.label })"
-              :style="{ '--index': index }"
-            >
-              <span :class="`iconfont ${v.icon}`"></span>
-              {{ v.label }}
+      <div class="action-row">
+        <div class="follor-wrapper" ref="folloWrapperRef">
+          <button class="fav-btn" @click="clickBtn($event)" ref="btnRef">
+            <span
+              v-for="p in particles"
+              :key="p.id"
+              class="particle"
+              :style="{
+                left: `${p.x}px`,
+                top: `${p.y}px`,
+                '--tx': `${p.tx}px`,
+                '--ty': `${p.ty}px`,
+              }"
+            ></span>
+            <span :class="`iconfont ${currentIcon}`"></span>
+            {{ followStatus }}
+          </button>
+          <Transition name="dropdown">
+            <div class="dropdown-menu" v-if="isDropdownOpen">
+              <div
+                class="dropdown-item"
+                v-for="(v, index) in STATUS_OPTIONS"
+                :key="v.value"
+                @click="selectStatus({ value: v.value as CollectionStatus, label: v.label })"
+                :style="{ '--index': index }"
+              >
+                <span :class="`iconfont ${v.icon}`"></span>
+                {{ v.label }}
+              </div>
             </div>
-          </div>
-        </Transition>
+          </Transition>
+        </div>
+
+        <button type="button" class="watch-btn" @click="isSourcePickerOpen = true">
+          <span>▶</span>
+          观看
+        </button>
       </div>
     </div>
+    <AnimeSourcePicker
+      :open="isSourcePickerOpen"
+      @close="isSourcePickerOpen = false"
+      @select="handleSourceSelect"
+    />
     <div class="anime-detail">
       <div class="tab-nav" ref="tabNavRef">
         <RouterLink
@@ -82,7 +99,7 @@
 </template>
 
 <script setup lang="ts" name="">
-import { useRoute } from 'vue-router'
+import { useRoute, useRouter } from 'vue-router'
 import { getAnimeById } from '@/api/bangumi'
 import { onMounted, ref, computed, nextTick, watch } from 'vue'
 import { onClickOutside, useResizeObserver } from '@vueuse/core'
@@ -93,8 +110,10 @@ import '@/assets/styles/DetailView.css'
 import { useFavorites, STATUS_LABELS, STATUS_OPTIONS } from '@/composables/useFavorites'
 import type { CollectionStatus } from '@/types/favorite'
 import type { Anime } from '@/types/anime'
+import AnimeSourcePicker from '@/components/AnimeSourcePicker.vue'
 
 const route = useRoute()
+const router = useRouter()
 const id = Number(route.params.id)
 
 const anime = ref<Anime | null>(null)
@@ -116,6 +135,18 @@ onMounted(async () => {
 // 追番按钮
 const followStatus = ref('未追')
 const isDropdownOpen = ref(false)
+
+const isSourcePickerOpen = ref(false)
+
+function handleSourceSelect(ruleName: string): void {
+  isSourcePickerOpen.value = false
+
+  void router.push({
+    name: 'watch',
+    params: { id },
+    query: { source: ruleName },
+  })
+}
 
 // 收藏状态选择
 function selectStatus(params: { value: CollectionStatus; label: string }) {
@@ -264,7 +295,7 @@ function clickBtn(e: MouseEvent) {
   .info-card {
     padding: 0;
     display: grid;
-    grid-template-columns: repeat(2,1fr);
+    grid-template-columns: repeat(2, 1fr);
     width: 296px;
     gap: 16px;
   }
@@ -330,5 +361,16 @@ function clickBtn(e: MouseEvent) {
     margin-bottom: var(--space-md);
   }
 
+  .action-row {
+    position: relative;
+    top: 0;
+    left: 0;
+    width: 296px;
+    margin-left: 0;
+  }
+
+  .watch-btn {
+    width: 126px;
+  }
 }
 </style>

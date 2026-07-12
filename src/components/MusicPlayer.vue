@@ -2617,4 +2617,10 @@ watch(isPlayerFullscreen, (isFullscreen) => {
     opacity: 1;
   }
 }
+
+@media (max-width:768px){
+  .music-player.is-fullscreen {
+    padding: 22px 40px;
+  }
+}
 </style>
