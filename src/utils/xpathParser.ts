@@ -6,6 +6,28 @@ export interface AnimeSourceSearchResult {
   url: string
 }
 
+// 单集播放页面信息
+export interface AnimeSourceEpisode {
+  //集数或页面显示名称。
+  title:string
+  url:string
+}
+
+// 一条播放线路及其剧集列表
+export interface AnimeSourceEpisodeRoute {
+  name:string
+  episodes: AnimeSourceEpisode[]
+}
+
+export interface AnimeStreamSource {
+  url:string
+  referer:string
+}
+
+
+
+
+
 //  将 Kazumi 的 // XPath 转成以当前卡片为范围的相对查询
 function toRelativeXPath(xpath: string): string {
   return xpath.startsWith('//') ? `.${xpath}` : xpath

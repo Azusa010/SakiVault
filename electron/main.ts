@@ -1,8 +1,12 @@
 import { app, BrowserWindow, ipcMain } from 'electron'
-import path from 'node:path'
+import path, { resolve } from 'node:path'
 import { fileURLToPath } from 'node:url'
 import { buildSearchUrl, isKazumiSourceRule, isKazumiRuleSummary } from '../src/utils/sourceRule.ts'
-import type { AnimeSourceSearchResult } from '../src/utils/xpathParser.ts'
+import type {
+  AnimeSourceSearchResult,
+  AnimeSourceEpisodeRoute,
+  AnimeStreamSource,
+} from '../src/utils/xpathParser.ts'
 import type { KazumiRuleSummary, KazumiSourceRule } from '../src/utils/sourceRule.ts'
 // 获取当前Electron主进程文件夹所在目录
 const __dirname = path.dirname(fileURLToPath(import.meta.url))
@@ -94,6 +98,202 @@ function createSearchExtractionScript(rule: object): string {
   `
 }
 
+// 生成在隐藏窗口内提取播放线路与剧集的 XPath 脚本。
+function createEpisodeExtractionScript(rule: object): string {
+  return `
+    (() => {
+      const rule = ${JSON.stringify(rule)}
+
+      const evaluateXPath = (context, xpath) => {
+        const normalizedXPath = xpath.startsWith('//') ? '.' + xpath : xpath
+        const result = document.evaluate(
+          normalizedXPath,
+          context,
+          null,
+          XPathResult.ORDERED_NODE_SNAPSHOT_TYPE,
+          null,
+        )
+
+        const nodes = []
+        for (let index = 0; index < result.snapshotLength; index += 1) {
+          const node = result.snapshotItem(index)
+          if (node) nodes.push(node)
+        }
+        return nodes
+      }
+
+      return evaluateXPath(document, rule.chapterRoads)
+        .map((routeNode, routeIndex) => {
+          const episodes = evaluateXPath(routeNode, rule.chapterResult)
+            .map((episodeNode, episodeIndex) => {
+              const href = episodeNode?.getAttribute?.('href') || ''
+
+              if (!href) return null
+
+              try {
+                return {
+                  title: episodeNode.textContent?.trim() || '第 ' + (episodeIndex + 1) + ' 集',
+                  url: new URL(href, location.href).toString(),
+                }
+              } catch {
+                return null
+              }
+            })
+            .filter(Boolean)
+
+          return {
+            name: '线路 ' + (routeIndex + 1),
+            episodes,
+          }
+        })
+        .filter((route) => route.episodes.length > 0)
+    })()
+  `
+}
+
+//加载搜索结果对应的详情页，并解析播放线路与聚集
+async function loadEpisodeRoutes(
+  rawRule: unknown,
+  rawResultUrl: unknown,
+): Promise<AnimeSourceEpisodeRoute[]> {
+  if (!isKazumiSourceRule(rawRule)) throw new Error('来源规则格式无效')
+
+  if (typeof rawResultUrl !== 'string' || !isHttpUrl(rawResultUrl))
+    throw new Error('播放页面地址无效')
+
+  const episodeWindow = new BrowserWindow({
+    show: false,
+    webPreferences: {
+      contextIsolation: true,
+      nodeIntegration: false,
+      sandbox: true,
+    },
+  })
+
+  episodeWindow.webContents.setWindowOpenHandler(() => ({ action: 'deny' }))
+
+  try {
+    await loadWithTimeout(episodeWindow, rawResultUrl)
+
+    const result = await episodeWindow.webContents.executeJavaScript(
+      createEpisodeExtractionScript(rawRule),
+    )
+
+    return Array.isArray(result) ? (result as AnimeSourceEpisodeRoute[]) : []
+  } finally {
+    if (!episodeWindow.isDestroyed()) {
+      episodeWindow.destroy()
+    }
+  }
+}
+
+//判断网络请求是否为可直接播放的媒体清单或者视频文件
+function isPlayableMediaUrl(value: string): boolean {
+  try {
+    const pathname = new URL(value).pathname.toLowerCase()
+    return pathname.endsWith('.m3u8') || pathname.endsWith('.mp4') || pathname.endsWith('.webm')
+  } catch {
+    return false
+  }
+}
+
+// 监听指定隐藏窗口的媒体请求，并在超时后清理监听器
+function watchMediaRequest(window: BrowserWindow): {
+  promise: Promise<AnimeStreamSource>
+  dispose: () => void
+} {
+  const webRequest = window.webContents.session.webRequest
+  let timeoutId: ReturnType<typeof setTimeout> | undefined
+  let settled = false
+
+  let resolveStream: (source: AnimeStreamSource) => void
+  let rejectStream: (error: Error) => void
+
+  const promise = new Promise<AnimeStreamSource>((resolve, reject) => {
+    resolveStream = resolve
+    rejectStream = reject
+  })
+
+  const dispose = (): void => {
+    if (timeoutId) {
+      clearTimeout(timeoutId)
+    }
+
+    webRequest.onBeforeRequest(null)
+  }
+
+  webRequest.onBeforeRequest({ urls: ['*://*/*'] }, (details, callback) => {
+    callback({})
+
+    if (
+      settled ||
+      details.webContentsId !== window.webContents.id ||
+      !isPlayableMediaUrl(details.url)
+    ) {
+      return
+    }
+
+    settled = true
+    dispose()
+
+    resolveStream!({
+      url: details.url,
+      referer: details.referrer || window.webContents.getURL(),
+    })
+  })
+
+  timeoutId = setTimeout(() => {
+    if (settled) {
+      return
+    }
+
+    settled = true
+    dispose()
+    rejectStream!(new Error('未能在播放页面中找到视频地址'))
+  }, 20_000)
+
+  return { promise, dispose }
+}
+
+// 加载单集播放页面，嗅探媒体请求并返回最终播放地址
+async function resolveAnimeStream(rawEpisodeUrl:unknown):Promise<AnimeStreamSource>
+{
+  if(typeof rawEpisodeUrl !== 'string' || !isHttpUrl(rawEpisodeUrl)) throw new Error("单集播放地址无效");
+
+  const sniffWindow = new BrowserWindow({
+    show:false,
+    webPreferences:{
+      contextIsolation:true,
+      nodeIntegration:false,
+      sandbox:true,
+      partition:'watch-sniff',
+    }
+  })
+  sniffWindow.webContents.setWindowOpenHandler(()=>({action:'deny'}))
+
+  const watcher = watchMediaRequest(sniffWindow)
+
+  try {
+    await loadWithTimeout(sniffWindow, rawEpisodeUrl)
+
+    await sniffWindow.webContents.executeJavaScript(`
+      document.querySelectorAll('video').forEach((video) => {
+        video.muted = true
+        video.play().catch(() => {})
+      })
+    `)
+
+    return await watcher.promise
+  } finally {
+    watcher.dispose()
+
+    if(!sniffWindow.isDestroyed()){
+      sniffWindow.destroy()
+    }
+  }
+
+}
+
 // 加载搜索页面，超时后终止本次请求。
 async function loadWithTimeout(window: BrowserWindow, url: string): Promise<void> {
   let timeoutId: ReturnType<typeof setTimeout> | undefined
@@ -158,14 +358,22 @@ async function searchAnime(rawRule: unknown, keyword: unknown): Promise<AnimeSou
 
 /** 注册页面可调用的观看相关 IPC。 */
 function registerWatchIpc(): void {
-  ipcMain.handle('watch:list-rules',async()=> listKazumiRules())
+  ipcMain.handle('watch:list-rules', async () => listKazumiRules())
 
-  ipcMain.handle('watch:load-rule',async(_event,name)=>{
+  ipcMain.handle('watch:load-rule', async (_event, name) => {
     return loadKazumiRule(name)
   })
 
-  ipcMain.handle('watch:search',async(_event,rule,keyword)=>{
+  ipcMain.handle('watch:load-episodes', async (_event, rule, resultUrl) => {
+    return loadEpisodeRoutes(rule, resultUrl)
+  })
+
+  ipcMain.handle('watch:search', async (_event, rule, keyword) => {
     return searchAnime(rule, keyword)
+  })
+
+  ipcMain.handle('watch:resolve-stream',async (_event,episodeUrl)=>{
+    return resolveAnimeStream(episodeUrl)
   })
 }
 

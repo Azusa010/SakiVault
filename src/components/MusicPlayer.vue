@@ -1566,7 +1566,7 @@ watch(isPlayerFullscreen, (isFullscreen) => {
   .lyric-line {
     margin: 0 0 28px;
     color: var(--text-main);
-    font-size: 2.25rem;
+    font-size: 2.9rem;
     font-weight: 700;
     line-height: 1.2;
     opacity: 0.22;

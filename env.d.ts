@@ -1,7 +1,11 @@
 /// <reference types="vite/client" />
 
-import type { KazumiSourceRule,KazumiRuleSummary } from '@/utils/sourceRule'
-import type { AnimeSourceSearchResult } from '@/utils/xpathParser'
+import type { KazumiSourceRule, KazumiRuleSummary } from '@/utils/sourceRule'
+import type {
+  AnimeSourceSearchResult,
+  AnimeSourceEpisodeRoute,
+  AnimeStreamSource,
+} from '@/utils/xpathParser'
 
 declare global {
   interface Window {
@@ -10,6 +14,11 @@ declare global {
       searchAnime: (rule: KazumiSourceRule, keyword: string) => Promise<AnimeSourceSearchResult[]>
       listAnimeRules: () => Promise<KazumiRuleSummary[]>
       loadAnimeRule: (name: string) => Promise<KazumiSourceRule>
+      loadAnimeEpisodes: (
+        rule: KazumiSourceRule,
+        resultUrl: string,
+      ) => Promise<AnimeSourceEpisodeRoute[]>
+      resolveAnimeStream: (episodeUrl: string) => Promise<AnimeStreamSource>
     }
   }
 }

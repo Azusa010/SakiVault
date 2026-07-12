@@ -7,4 +7,6 @@ contextBridge.exposeInMainWorld('electronAPI', {
   searchAnime: (rule, keyword) => ipcRenderer.invoke('watch:search', rule, keyword),
   listAnimeRules: () => ipcRenderer.invoke('watch:list-rules'),
   loadAnimeRule: (name) => ipcRenderer.invoke('watch:load-rule', name),
+  loadAnimeEpisodes: (rule,resultUrl)=> ipcRenderer.invoke('watch:load-episodes',rule,resultUrl),
+  resolveAnimeStream: (episodeUrl)=> ipcRenderer.invoke('watch:resolve-stream',episodeUrl)
 })
