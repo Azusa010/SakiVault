@@ -1,5 +1,7 @@
 <template>
-  <div class="app">
+  <div class="app" :class="{'is-desktop': isDesktop}">
+    <AppTitleBar v-if="isDesktop && !isMusicFullscreen"/>
+
     <MusicPlayer @fullscreen-change="handleFullscreenChange"></MusicPlayer>
 
     <div v-show="!isMusicFullscreen">
@@ -24,8 +26,10 @@ import { RouterView } from 'vue-router'
 import PearBlossom from '@/components/PearBlossom.vue'
 import MouseEffect from '@/components/MouseEffect.vue'
 import { ref } from 'vue'
+import AppTitleBar from './components/AppTitleBar.vue'
 
 const isMusicFullscreen = ref(false)
+const isDesktop = window.electronAPI?.isDesktop === true
 
 function handleFullscreenChange(isFullscreen: boolean) {
   isMusicFullscreen.value = isFullscreen
@@ -57,8 +61,17 @@ function togglePerformanceMode(): void {
 .app {
   min-height: 100vh;
 }
+
 .main-content {
   padding-top: var(--nav-offset-top);
   padding-bottom: var(--nav-offset-bottom);
+}
+
+.app.is-desktop :deep(.navbar) {
+  top: 36px;
+}
+
+.app.is-desktop .main-content {
+  padding-top: calc(var(--nav-offset-top) + 36px);
 }
 </style>

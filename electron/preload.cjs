@@ -4,6 +4,9 @@ const { contextBridge, ipcRenderer } = require('electron')
 contextBridge.exposeInMainWorld('electronAPI', {
   //标记当前运行在 Electron 桌面端。
   isDesktop: true,
+  minimizeWindow: () => ipcRenderer.send('window:minimize'),
+  toggleMaximizeWindow: () => ipcRenderer.send('window:toggle-maximize'),
+  closeWindow: () => ipcRenderer.send('window:close'),
   searchAnime: (rule, keyword) => ipcRenderer.invoke('watch:search', rule, keyword),
   listAnimeRules: () => ipcRenderer.invoke('watch:list-rules'),
   loadAnimeRule: (name) => ipcRenderer.invoke('watch:load-rule', name),

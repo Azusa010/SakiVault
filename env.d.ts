@@ -15,6 +15,9 @@ declare global {
   interface Window {
     electronAPI?: {
       isDesktop: boolean
+      minimizeWindow: () => void
+      toggleMaximizeWindow: () => void
+      closeWindow: () => void
       searchAnime: (rule: KazumiSourceRule, keyword: string) => Promise<AnimeSourceSearchResult[]>
       listAnimeRules: () => Promise<KazumiRuleSummary[]>
       loadAnimeRule: (name: string) => Promise<KazumiSourceRule>

@@ -438,6 +438,27 @@ async function checkAnimeSources(
   return results
 }
 
+// 注册自定义标题栏使用的窗口控制事件
+function registerWindowControlsIpc(): void {
+  ipcMain.on('window:minimize', (event) => {
+    BrowserWindow.fromWebContents(event.sender)?.minimize()
+  })
+  ipcMain.on('window:toggle-maximize', (event) => {
+    const window = BrowserWindow.fromWebContents(event.sender)
+
+    if (!window) return
+
+    if (window.isMaximized()) {
+      window.unmaximize()
+      return
+    }
+    window.maximize()
+  })
+  ipcMain.on('window:close', (event) => {
+    BrowserWindow.fromWebContents(event.sender)?.close()
+  })
+}
+
 // 注册页面可调用的观看相关 IPC。
 function registerWatchIpc(): void {
   ipcMain.handle('watch:list-rules', async () => listKazumiRules())
@@ -467,8 +488,11 @@ function registerWatchIpc(): void {
 
 app.on('ready', () => {
   registerWatchIpc()
+  registerWindowControlsIpc()
 
   const mainWindow = new BrowserWindow({
+    frame: false,
+    backgroundColor: '#0b0e14',
     width: 1200,
     height: 800,
     minWidth: 960,
