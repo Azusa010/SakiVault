@@ -28,7 +28,12 @@ SakiVault 不是静态展示页，而是一个基于 **Vue 3 + TypeScript + Elec
 | 音乐播放 | 播放控制、全屏模式、播放列表、音频响应式背景 |
 | 桌面体验 | 自定义标题栏、窗口控制、Windows 安装包、性能模式 |
 
-> 截图建议：在此补充首页、观看源选择页、全屏音乐播放器各一张截图，GitHub 与简历链接的展示效果会更完整。
+![主页](images/home.png)
+![内容](images/detail.png)
+![收藏](images/collection.png)
+![观看](images/select.png)
+![音乐](images/music.png)
+
 
 ## 技术架构
 
